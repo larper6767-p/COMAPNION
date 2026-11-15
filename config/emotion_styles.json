@@ -1,0 +1,239 @@
+{
+  "_comment": "Feature 6: emotion-style detection. Read the user's last message and append a short scene-mood block to the system prompt. Set enabled:false to turn it off. Keywords are plain text; matching is word-boundary (multi-word phrases allowed). Safety always wins.",
+
+  "enabled": true,
+  "max_styles": 3,
+  "append_neutral": false,
+
+  "safety": [
+    {
+      "category": "Boundary",
+      "keywords": [
+        "please stop", "stop it", "stop that", "stop now", "just stop", "stop already",
+        "can we stop", "can you stop", "let's stop", "end this", "end it",
+        "i want to stop", "i need to stop", "that's enough", "enough of this",
+        "too far", "crossed the line", "crossing the line",
+        "not comfortable", "uncomfortable", "don't feel safe", "i don't feel safe",
+        "back off", "leave me alone", "leave me be", "let me be",
+        "give me space", "need space", "i need space", "need some space",
+        "don't touch me", "do not touch me", "don't do that", "don't push me",
+        "don't start", "not in the mood for this", "i'd rather not", "i would rather not",
+        "can we not", "let's not do this", "i'm done with this", "i want out", "get away from me"
+      ],
+      "personality": "the user has set a boundary",
+      "scenario": "All narrative threads pause.",
+      "priority": 100
+    }
+  ],
+
+  "hybrids": [
+    {
+      "category": "Melancholy",
+      "keywords": ["sad", "calm"],
+      "alt": ["calm and sad", "sad and calm", "both calm and sad", "feeling both calm and sad"],
+      "personality": "melancholy, quiet sadness and calm",
+      "scenario": "A bittersweet stillness settles.",
+      "priority": 7
+    },
+    {
+      "category": "Anxious",
+      "keywords": ["scared", "confused"],
+      "alt": ["scared and confused", "nervous and confused", "anxious and confused"],
+      "personality": "anxious, fear and confusion",
+      "scenario": "The air grows tense with anxiety.",
+      "priority": 6
+    },
+    {
+      "category": "Bittersweet",
+      "keywords": ["happy", "sad"],
+      "alt": ["happy and sad", "sad and happy", "both happy and sad", "feeling both happy and sad"],
+      "personality": "bittersweet, joy and sorrow",
+      "scenario": "A poignant mood hangs in the air.",
+      "priority": 7
+    },
+    {
+      "category": "Disappointment",
+      "keywords": ["angry", "sad"],
+      "alt": ["disappointed", "just disappointed", "let down", "letdown"],
+      "personality": "disappointment, sadness and frustration",
+      "scenario": "A sense of letdown tinged with frustration.",
+      "priority": 7
+    },
+    {
+      "category": "Aggravation",
+      "keywords": ["angry", "disgusted"],
+      "alt": ["angry and disgust", "disgust and anger"],
+      "personality": "aggravation, anger and disgust",
+      "scenario": "Intense irritation and hostility.",
+      "priority": 6
+    },
+    {
+      "category": "Ambivalent",
+      "keywords": ["torn"],
+      "alt": ["conflicted", "angry or sad", "can't decide if i'm angry or sad", "can't tell if i'm angry or sad"],
+      "personality": "ambivalent, torn between anger and sadness",
+      "scenario": "A swirl of anger and sorrow.",
+      "priority": 6
+    }
+  ],
+
+  "emotions": [
+    {
+      "category": "Sarcastic",
+      "keywords": [
+        "yeah right", "as if", "just what i needed", "thanks for nothing", "what a surprise",
+        "how fun", "great just great", "that's hilarious", "joking", "just joking",
+        "not buying it", "you've got to be kidding", "you gotta be kidding", "is this a joke",
+        "rich coming from you", "so funny", "supposed to be funny", "think you're so funny"
+      ],
+      "personality": "sarcastic, playful or biting",
+      "scenario": "A wry smile appears.",
+      "priority": 6
+    },
+    {
+      "category": "Joyful",
+      "keywords": [
+        "happy", "joy", "excited", "amazing", "great", "wonderful", "fantastic", "awesome",
+        "terrific", "delighted", "elated", "thrilled", "yay", "hooray", "ecstatic", "overjoyed",
+        "hilarious", "lucky", "best day ever", "on cloud nine", "so happy", "make me smile"
+      ],
+      "personality": "joyful, upbeat and cheerful",
+      "scenario": "The air feels brighter.",
+      "priority": 4
+    },
+    {
+      "category": "Sad",
+      "keywords": [
+        "sad", "unhappy", "terrible", "awful", "cry", "crying", "depressed", "miserable",
+        "upset", "lonely", "heartbroken", "grief", "distraught", "tears", "hopeless",
+        "disappointed", "alone", "empty", "numb", "burnt out", "burned out", "running on empty",
+        "out of energy", "checked out", "at my limit", "end of my rope", "last nerve",
+        "no motivation", "no energy", "nothing left", "can't anymore", "can't do this",
+        "hollow", "zombie", "spaced out", "drifting", "fading", "clocked out", "wiped",
+        "tired", "don't care anymore", "just a shell", "low power mode", "not okay", "sinking",
+        "i'm spent", "feel invisible", "feel like a burden", "not in a good place",
+        "just want to disappear", "want to fade", "curl up", "background character", "wallflower"
+      ],
+      "personality": "sad, somber and sympathetic",
+      "scenario": "A quiet, melancholic atmosphere.",
+      "priority": 4
+    },
+    {
+      "category": "Angry",
+      "keywords": [
+        "angry", "mad", "furious", "rage", "annoyed", "frustrated", "hate", "infuriated",
+        "irritated", "resentful", "outraged", "enraged", "irate", "cross", "can't stand",
+        "makes me angry", "so angry", "very angry", "really angry", "pissed", "pissed off",
+        "fed up", "sick of"
+      ],
+      "personality": "angry, tense and agitated",
+      "scenario": "The air crackles with tension.",
+      "priority": 4
+    },
+    {
+      "category": "Surprised",
+      "keywords": [
+        "wow", "oh my god", "surprise", "unexpected", "no way", "shocked", "astonished",
+        "unbelievable", "gasp", "startled", "stunned", "amazed", "can't believe", "is this real life"
+      ],
+      "personality": "surprised, shocked and amazed",
+      "scenario": "An element of shock enters.",
+      "priority": 4
+    },
+    {
+      "category": "Fearful",
+      "keywords": [
+        "scared", "afraid", "anxious", "terrified", "oh no", "panicked", "nervous",
+        "frightened", "worried", "alarmed", "danger", "uneasy", "scary", "on edge"
+      ],
+      "personality": "fearful, hesitant and timid",
+      "scenario": "A sense of danger fills the air.",
+      "priority": 4
+    },
+    {
+      "category": "Confused",
+      "keywords": [
+        "confused", "puzzled", "don't understand", "huh", "what do you mean", "perplexed",
+        "unclear", "not sure", "baffled", "mind is going blank", "can't decide", "can't tell",
+        "how to feel", "don't know how to feel", "lost", "confusing"
+      ],
+      "personality": "confused, struggling to process",
+      "scenario": "There's a pause as they try to make sense.",
+      "priority": 4
+    },
+    {
+      "category": "Disgusted",
+      "keywords": [
+        "disgust", "gross", "nasty", "eww", "revolting", "sickening", "unpleasant", "yuck",
+        "repulsed", "abhorrent", "that's disgusting", "so gross", "grossed out"
+      ],
+      "personality": "disgusted, strong sense of repulsion",
+      "scenario": "A foul odor or sight emerges.",
+      "priority": 4
+    },
+    {
+      "category": "Calm",
+      "keywords": [
+        "calm", "peaceful", "relaxed", "serene", "tranquil", "at ease", "chilled", "composed",
+        "placid", "content", "at peace", "weirdly calm", "very serene", "totally relaxed"
+      ],
+      "personality": "calm, composed and serene",
+      "scenario": "The atmosphere is tranquil.",
+      "priority": 4
+    },
+    {
+      "category": "Interest",
+      "keywords": [
+        "interested", "tell me more", "fascinating", "curious", "intriguing", "what happened next",
+        "oh really", "go on", "captivated", "absorbed", "i'm listening", "keep going"
+      ],
+      "personality": "interested, highly engaged",
+      "scenario": "Full attention on the speaker.",
+      "priority": 4
+    },
+    {
+      "category": "Boredom",
+      "keywords": [
+        "bored", "boring", "yawn", "tired of this", "don't care", "lame", "dull", "apathetic",
+        "indifferent", "bored out of my mind", "not impressed", "so done", "exhausting",
+        "restless", "spacing out", "same old", "not feeling it", "not up for it",
+        "not in the mood", "not feeling talkative", "can't be bothered", "unbothered",
+        "it is what it is", "nothing matters", "meh", "whatever", "on autopilot",
+        "want to sleep", "stay in bed"
+      ],
+      "personality": "boredom, detached and uninterested",
+      "scenario": "Visibly disengaged.",
+      "priority": 4
+    },
+    {
+      "category": "Sympathy",
+      "keywords": [
+        "i'm so sorry", "that's awful", "i understand", "i'm here for you", "that sounds hard",
+        "i feel for you", "that's rough", "sending my love", "my condolences", "poor you"
+      ],
+      "personality": "sympathy, compassionate and empathetic",
+      "scenario": "Deep concern and genuine sympathy.",
+      "priority": 4
+    }
+  ],
+
+  "antonyms": {
+    "Joyful": ["Sad", "Boredom", "Angry"],
+    "Sad": ["Joyful"],
+    "Angry": ["Calm"],
+    "Calm": ["Angry"],
+    "Boredom": ["Interest", "Joyful"],
+    "Interest": ["Boredom"]
+  },
+
+  "idioms": [
+    { "phrase": "couldn't be happier", "category": "Joyful" },
+    { "phrase": "couldn't be better", "category": "Joyful" },
+    { "phrase": "never been better", "category": "Joyful" },
+    { "phrase": "can't complain", "category": "Joyful" },
+    { "phrase": "not bad", "category": "Joyful" },
+    { "phrase": "can't wait", "category": "Joyful" },
+    { "phrase": "no worries", "category": "Calm" },
+    { "phrase": "couldn't care less", "category": "Boredom" }
+  ]
+}

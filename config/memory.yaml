@@ -1,0 +1,47 @@
+# ── Feature 2: Vector-based long-term memory ──────────────────────────────────
+# Evelyn stores memories (facts about the user + daily summaries) as embeddings in
+# a local chromadb database and injects the most relevant ones into the prompt.
+#
+# DISABLED by default: with `enabled: false` nothing is imported, written, or
+# injected, and the companion behaves exactly as before.
+#
+# Setup:
+#   1. pip install chromadb  (already in requirements.txt)
+#   2. Set `enabled: true` below
+#   3. Existing facts and daily summaries are mirrored automatically at startup.
+#      A manual seed is still available if needed:
+#        python -m memory.migrate            (run from the src/ directory)
+#      or:  python src/memory/migrate.py
+
+enabled: true
+
+# Storage backend (only chromadb is supported today).
+backend: "chromadb"
+
+# On-disk store, relative to the project root (or an absolute path).
+# Add this directory to your backups if you want to keep Evelyn's memory.
+path: "memory_store"
+
+# Collection name inside the store. The retired pre-Evelyn collection
+# (`marin_memories`) is deliberately left untouched on disk but is never queried.
+collection: "evelyn_memories"
+
+# Embedding backend:
+#   default -> chromadb's bundled ONNX all-MiniLM-L6-v2.  Semantic and small,
+#              but downloads ~80 MB once (cached in ~/.cache/chroma).  RECOMMENDED.
+#   hash    -> dependency-free hashed bag-of-words.  No download, fully offline,
+#              lower quality — good for offline/testing.
+embedding: "default"
+
+# Vector width for the `hash` backend (ignored for `default`).
+hash_dim: 256
+
+# How many relevant memories to inject into the system prompt each turn.
+top_k: 4
+
+# Optional distance ceiling: hits farther than this are dropped (null = keep all
+# of the top_k).  Lower distance = more relevant.  Tune to taste, e.g. 1.0.
+max_distance: 2.0
+
+# chromadb's anonymised telemetry.  Keep false for a fully local pet.
+telemetry: false

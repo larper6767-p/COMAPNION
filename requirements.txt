@@ -1,0 +1,65 @@
+﻿# ── Core AI ───────────────────────────────────────────────────────────────────
+cerebras-cloud-sdk        # Cloud LLM (Cerebras)
+ollama                    # Local LLM fallback
+faster-whisper            # Speech-to-text (Whisper)
+
+# ── Voice & Audio ─────────────────────────────────────────────────────────────
+fishaudio                 # Fish Audio TTS
+pygame                    # Audio playback
+sounddevice               # Microphone capture
+numpy                     # Audio buffer processing
+pycaw                     # Windows audio ducking (optional but recommended)
+
+# ── GUI ───────────────────────────────────────────────────────────────────────
+PySide6                   # Qt6 GUI framework
+keyboard                  # Global hotkey listener
+PyOpenGL                  # OpenGL bindings (required by live2d-py)
+
+# ── Live2D renderer ───────────────────────────────────────────────────────────
+# live2d-py renders Cubism v3 models in any OpenGL context.
+# Wheel is abi3 (cp311+) — compatible with Python 3.11 through 3.14+.
+# Install:  .venv\Scripts\pip install live2d-py
+live2d-py                 # Native Live2D Cubism v3 renderer for Python
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv             # Load .env API keys
+PyYAML                    # Reads config/*.yaml feature configs
+
+# ── Web search (Feature 20) ───────────────────────────────────────────────────
+# ddgs (DuckDuckGo, no API key) is imported lazily INSIDE core/websearch.py —
+# importing the app or running the whole suite needs neither ddgs nor network.
+ddgs                      # Keyless search provider; enables config/websearch.yaml
+
+# ── Long-term memory (Feature 2) ──────────────────────────────────────────────
+# Local, on-disk vector memory (facts + daily summaries) with semantic search.
+# NOTE: chromadb pulls a fairly large tree (grpcio, kubernetes, opentelemetry,
+# uvicorn, ...). It is only imported when enabled in config/memory.yaml, so the
+# companion runs unchanged without it.
+chromadb                  # Local vector store (embeddings + nearest-neighbour search)
+
+# ── Screen vision (Feature 4) ─────────────────────────────────────────────────
+# On-demand screen capture: one frame on hotkey, encoded IN MEMORY (never written
+# to disk). mss is pure Python (py3-none-any); Pillow encodes/downscales the PNG.
+# Only imported when enabled in config/vision.yaml.
+mss                       # Screen capture (active window's monitor work area)
+pillow                    # In-memory PNG encoding + downscale
+
+# ── Real SFX audio (Feature 12) ───────────────────────────────────────────────
+# Sound-effect clips for the Feature 7 marker symbols (~ ♥ ♡ ♪ / "mwah" etc.).
+# Playback reuses pygame (already listed above) — NO new dependency. Drop clips
+# into assets/sfx/ (naming + mapping: config/sfx.yaml and assets/sfx/README.txt).
+# 
+# ╋ Wake word (optional) ══════════════════════════════
+# openwakeword            # Neural always-on wake word detection
+#                         # Uncomment and run: pip install openwakeword
+#                         # Then set "wake_word_enabled": true in personality.json
+# 
+# ============ Touch reactions (Feature 13) ============
+# No new dependency: the zones/classifier/escalation/voice gating are pure
+# Python (json + dataclasses only), the debug overlay reuses Qt, and spoken
+# lines go through the existing Speaker stack (nothing extra to install).
+
+# ============ Drag physics (Feature 14) ============
+# No new dependency: the drag-physics inertia overlay is pure Python
+# (json + dataclasses); it drives the model's own Cubism physics rig through
+# the existing live2d-py runtime.

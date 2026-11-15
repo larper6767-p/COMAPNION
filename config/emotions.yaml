@@ -1,0 +1,47 @@
+# ── Feature 3: Emotion-driven expressions ─────────────────────────────────────
+# Maps a mood to a Live2D .exp3.json expression, played while that mood is active
+# through the renderer's EXISTING SetExpression path (src/live2d_face.py).  This
+# is the same behaviour Evelyn already had, moved out of hard-coded Python into
+# config so it can be tuned without touching code.
+#
+# The shipped values reproduce the built-in defaults exactly, so nothing changes
+# unless you edit this file.
+#
+#   enabled: false  -> expression playback is turned off entirely (moods still
+#                      change the face via config/live2d_moods.json).
+#
+# Both maps are MERGED over the built-in defaults: list only what you want to
+# change.  A mood set to null means "no expression"; a file entry set to null is
+# removed from registration.
+#
+# Reload without restarting: right-click Evelyn -> "Reload".
+
+enabled: true
+
+# .exp3.json files to register with the model: "filename" -> lookup key.
+# Files that are absent from characters/<name>/live2d/ are skipped silently.
+expressions:
+  "脸红.exp3.json":   blush
+  "生气.exp3.json":   angry
+  "星星眼.exp3.json": star_eyes
+  "爱心眼.exp3.json": heart_eyes
+  "泪.exp3.json":     tears
+  "白眼.exp3.json":   eyeroll
+  "脸黑.exp3.json":   dark
+  "血.exp3.json":     blood
+  "右手.exp3.json":   right_hand
+  "左手.exp3.json":   left_hand
+
+# mood -> expression key (must be one of the keys above), or null for none.
+mood_expressions:
+  idle:        null
+  joyful:      blush
+  excited:     star_eyes
+  embarrassed: blush
+  sad:         tears
+  angry:       angry
+  surprised:   star_eyes
+  curious:     star_eyes
+  relaxed:     null
+  love:        heart_eyes
+  aroused:     blush

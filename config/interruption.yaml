@@ -1,0 +1,28 @@
+# ─ Feature 19: interruption — how you cut her off, with manners ───────────────
+# What already exists (unchanged): barge-in by VOICE while she replies, and
+# her voice stopping the moment you SEND a typed message.
+#
+# What this adds:
+#   * a recovery line — when you cut her off while she was really mid-reply,
+#     she hands you the floor ("...Yes?") instead of stopping dead;
+#   * ctrl+alt+x — a keyboard SHUSH that stops her voice mid-sentence;
+#   * typing cuts in: sending a message while she's still GENERATING trips
+#     her interrupt monitor and waits up to a few seconds, instead of
+#     bouncing with "still finishing the last turn".
+#
+# enabled: false removes all three; the original stop behaviour stays.
+enabled: true
+
+recovery_lines:
+  - "Hm? Go ahead, I'm listening."
+  - "Ah — sorry, you first."
+  - "...Yes?"
+
+recovery_min_reply_chars: 24    # silent stop if she'd only said a word
+recovery_min_gap_s: 20.0        # never yield twice this close together
+recovery_max_streak: 2          # after this many in a row, she just stops
+recovery_stale_s: 600.0         # ...until this long passes without a cut-in
+
+yield_mood: "curious"           # her face when she hands the floor over
+
+hotkey: "ctrl+alt+x"            # "" disables the keyboard shush

@@ -1,0 +1,51 @@
+{
+  "face_renderer": "live2d",
+  "face": {
+    "size": 300,
+    "size_min": 200,
+    "size_max": 900,
+    "scale": 2.014,
+    "offset_x": -0.11,
+    "offset_y": -0.763,
+    "fps": 30,
+    "frame": {
+      "x": 0.51,
+      "y": 1.714375,
+      "w": 0.2,
+      "h": 0.2
+    }
+  },
+  "scene1_hotkey": "ctrl+shift+s",
+  "scene1_loops": 1,
+  "invert_eye_x": false,
+  "invert_head_x": false,
+  "invert_head_y": false,
+  "idle_loop": true,
+  "body_control": true,
+  "body_log": true,
+  "state_in_prompt": true,
+  "wink_swap": false,
+  "look_invert_x": false,
+  "behavior_director": true,
+  "liveliness": 0.7,
+  "lean_param": "ParamBodyAngleY0",
+  "lean_sign": 1.0,
+  "breath_pause_enabled": true,
+  "breath_pause_every": [
+    40,
+    90
+  ],
+  "breath_pause_hold": [
+    1.0,
+    1.5
+  ],
+  "lip_sync_enabled": true,
+  "lip_sync_offset_ms": 0,
+  "motion_budget": {
+    "max_head_angle": 10.0,
+    "max_eye_offset": 0.5,
+    "max_body_drift": 2.5,
+    "mood_multiplier": 1.0
+  },
+  "idle_physics_enabled": true
+}

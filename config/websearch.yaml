@@ -1,0 +1,22 @@
+# ─ Feature 20: internet access — a simple web search she may run ─────────────
+# A real person doesn't know last night's score or today's weather — she
+# looks it up.  When enabled, every user turn gets ONE tiny LLM question
+# ("would the web help here?"); if it says yes, she runs one DuckDuckGo
+# query (ddgs package, no API key) and the top snippets are handed to her
+# for that reply only.  Same question again soon → answered from a small
+# local cache instead of re-hitting the network.
+#
+# DISABLED by default (enabled: false): you opt in deliberately.
+#
+# Notes
+#   * A search-triggered turn takes ~2-4 s longer; normal turns are
+#     untouched.
+#   * Only the chosen search words leave your machine — never your chat.
+#   * No key, no account; she degrades gracefully to "couldn't look it up"
+#     whenever the provider is unreachable or rate-limits.
+enabled: true  # flipped on permanently at the user's request (2026-10-31)
+
+max_results: 5      # snippets injected into her context
+timeout_s: 8.0      # per search, seconds
+cache_hours: 3.0    # the same query is served from cache within this window
+max_entries: 200    # most rows kept in config/websearch_cache.json

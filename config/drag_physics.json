@@ -1,0 +1,134 @@
+{
+  "_comment": "Feature 14: drag physics. The SDK's own Cubism rig (physics3.json) is driven by head/body PARAMETERS, never by her screen position - so dragging her (Alt/Shift+drag pans the model, plain drag moves the pet) does not move the physics. This adds an inertia overlay on top of the engine: spring-dampers on the rig's soft outputs (hair, fringe, clothes, skirt, ears, chest) driven by the ACCELERATION of her body on screen. sign: -1 = the hair lags behind the motion (physical); flip to +1 if a group swings the wrong way. The spring is deliberately SOFT and slow (stiffness 14, damping 5) so the swing is a lazy, heavy sway instead of a twitch - raise stiffness for a snappier hair, lower it for a slower one. gain_scale multiplies every group's gain at once (0.5 = half strength). max_offset is the clamp in param units. enabled: false removes the whole feature instantly.",
+  "enabled": true,
+  "window_drag_gain": 0.8,
+  "model_drag_gain": 1.0,
+  "accel_smoothing": 0.6,
+  "max_accel": 800.0,
+  "deadzone_px": 0.75,
+  "stiffness": 14.0,
+  "damping": 5.0,
+  "max_offset": 4.0,
+  "sign": -1.0,
+  "gain_scale": 0.5,
+  "groups": {
+    "hair_side": {
+      "axis": "x",
+      "gain": 0.008,
+      "params": [
+        "HairFront_LS",
+        "HairFront_LS2",
+        "HairFront_LS3",
+        "HairFront_LS4",
+        "HairFront_BS",
+        "HairFront_BS2",
+        "HairFront_BS3",
+        "HairFront_BS4",
+        "HairFront2_LS1",
+        "HairFront2_LS2",
+        "HairFront2_LS3",
+        "HairFront2_LS4",
+        "HairPinytail_S1",
+        "HairPinytail_S2",
+        "HairPinytail_S3",
+        "HairPinytail_S4",
+        "HairPinytail_S5",
+        "HairPinytail_S6"
+      ]
+    },
+    "hair_vert": {
+      "axis": "y",
+      "gain": 0.006,
+      "params": [
+        "HairFront_LSY",
+        "HairFront_LSY2",
+        "HairFront2_LSY1",
+        "HairFront2_LSY2",
+        "HairFront_BSY",
+        "HairFront_BSY2",
+        "HairFront_BSY3",
+        "HairPinytail_SY1",
+        "HairPinytail_SY2",
+        "HairPinytail_SY3",
+        "HairPinytail_SY4",
+        "HairFront_IS1",
+        "HairFront_IS2",
+        "HairFront_IS3",
+        "HairFront_IS4",
+        "SillyHair_S1",
+        "SillyHair_S2",
+        "SillyHair_S3"
+      ]
+    },
+    "fringe": {
+      "axis": "x",
+      "gain": 0.025,
+      "params": [
+        "HanfFront_RS1",
+        "HanfFront_RS2",
+        "HanfFront_RS3",
+        "HanfFront_LS1",
+        "HanfFront_LS2",
+        "HanfFront_LS3",
+        "HanfFront_RS4",
+        "HanfFront_RS5",
+        "HanfFront_RS6",
+        "HanfFront_LS4",
+        "HanfFront_LS5"
+      ]
+    },
+    "clothes": {
+      "axis": "x",
+      "gain": 0.02,
+      "params": [
+        "ClothesHand_RS1",
+        "ClothesHand_RS2",
+        "ClothesHand_RS3",
+        "ClothesHand_LS1",
+        "ClothesHand_LS2",
+        "ClothesHand_LS3",
+        "ClothesHand_RSY1",
+        "ClothesHand_RSY2",
+        "ClothesHand_LSY1",
+        "ClothesHand_LSY2"
+      ]
+    },
+    "skirt": {
+      "axis": "x",
+      "gain": 0.018,
+      "params": [
+        "BowSkirtBack_S1",
+        "BowSkirtBack_S2",
+        "BowSkirtBack_S3",
+        "BowSkirtBack_SY1"
+      ]
+    },
+    "ears": {
+      "axis": "x",
+      "gain": 0.013,
+      "params": [
+        "Ear_SR1",
+        "Ear_SR2",
+        "Ear_SR3",
+        "Ear_SL1",
+        "Ear_SL2",
+        "Ear_SL3"
+      ]
+    },
+    "body": {
+      "axis": "x",
+      "gain": 0.008,
+      "params": [
+        "Chest_S1",
+        "Chest_S2",
+        "Chest_S3",
+        "Close_S1",
+        "Close_S2",
+        "Close_SY1",
+        "Close_SY2",
+        "Close2_SY1",
+        "Close2_S1"
+      ]
+    }
+  }
+}

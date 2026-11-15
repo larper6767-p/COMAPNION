@@ -1,0 +1,30 @@
+.venv/
+.env
+logs/
+memory_store/
+backups/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Runtime / private data (keep local, never commit)
+config/episodes/
+config/archive/
+config/memory.json
+config/relationship.json
+config/pet_state.json
+config/threads_state.json
+config/websearch_cache.json
+diagnose_out.txt
+probe_out.txt
+debug_out.txt
+
+# Private personality override (NSFW/personal). Tracked personality.json is the
+# public placeholder.
+config/personality.local.json
+
+# Build output
+dist/
+*.zip

@@ -1,0 +1,5 @@
+# ── Development / test-only dependencies ──────────────────────────────────────
+# Install into the project venv:
+#   .venv\Scripts\pip install -r requirements.txt -r requirements-dev.txt
+pytest          # test runner
+PyYAML          # config parsing (also a runtime dep, pinned here for clarity)

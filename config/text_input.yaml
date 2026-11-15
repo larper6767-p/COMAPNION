@@ -1,0 +1,35 @@
+# ── Feature 5 / 8B: Text input ───────────────────────────────────────────────
+# Type a message instead of speaking.  The typed message runs through the
+# EXACT same pipeline as a voice turn (commands, conversation history, memory,
+# mood + spoken reply), so voice keeps working exactly as before — you can mix
+# typing and talking freely.
+#
+# mode: inline  -> the input IS the speech bubble.  While she is silent the
+#                  bubble shows the input (inline_placeholder); tap it, type,
+#                  press Enter to send.  The moment she speaks the input
+#                  disappears and the same slot becomes her speech bubble; it
+#                  returns when the speech display ends.  Right-click / tray /
+#                  hotkey all focus this same input.
+# mode: window  -> the original behaviour: a separate dialog opens (the bubble
+#                  itself is untouched).
+#
+# Set enabled: false to remove the input AND the menu entries entirely.
+
+enabled: true
+mode: inline
+
+# Label shown in the right-click menu and the tray menu.
+menu_label: "⌨️  Type a message…"
+
+# Prompt shown in the separate dialog (mode: window only).
+placeholder: "Type what you'd like to say to Evelyn…"
+
+# Placeholder shown inside the bubble input (keep it short — it fits the bubble).
+inline_placeholder: "Type here… Enter to send"
+
+# Seconds the input waits AFTER her TTS has actually finished before taking
+# the bubble slot back (0 = as soon as the speech display timer expires).
+return_delay: 2.0
+
+# Global hotkey that focuses the inline input (window mode: opens the dialog).
+hotkey: "ctrl+t"

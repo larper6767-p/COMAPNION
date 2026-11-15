@@ -1,0 +1,22 @@
+# ─ Feature 18: dangling topics — things worth asking about later ──────────────
+# A person doesn't drop what you told them.  "I have the dentist on Thursday"
+# comes back as "how did the dentist go?" once enough time has passed.
+# How it works
+#   * After a turn, she (quietly) asks the model: "did the user mention a
+#     future/unfinished matter?" → the topic text is added to a local store
+#     (config/threads_state.json).
+#   * When the grace timer fires, the OLDEST thread older than
+#     min_age_hours and younger than ttl_hours is asked about ONCE.
+#   * One check-in per day at most; never about chest/lower-body zones, never
+#     reproachful.
+enabled: true
+
+min_age_hours: 6.0
+ttl_hours: 96.0
+max_open: 5
+max_ask_per_day: 1
+
+ask_lines:
+  - "By the way — how did {topic} go?"
+  - "Right, quick check-in: {topic}?"
+  - "Been meaning to ask — did {topic} work out?"

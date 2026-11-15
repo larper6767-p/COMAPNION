@@ -1,0 +1,54 @@
+{
+  "_comment": "Feature 7: sound scripts. When the user's message reads as intimate, a sound-guidance block is injected into the system prompt for the next N turns. Hard patterns trigger on their own; soft/ambiguous patterns need soft_threshold hits. Set enabled:false to turn it off.",
+
+  "enabled": true,
+  "linger_turns": 4,
+  "soft_threshold": 2,
+
+  "trigger_patterns": [
+    "\\bcocks?\\b", "\\bdicks?\\b", "\\bpenis\\b",
+    "\\bpuss(?:y|ies)\\b", "\\bcunts?\\b", "\\bclits?\\b",
+    "\\bnipples?\\b", "\\btits?\\b", "\\bbreasts?\\b", "\\bboobs?\\b",
+    "\\bass(?:es)?\\b", "\\bbutts?\\b",
+    "\\bcum(?:s|ming|med)?\\b", "\\bprecum\\b", "\\bcreampie\\b",
+    "\\bfuck(?:s|ing|ed|er|ers)?\\b", "\\bthrust(?:s|ing|ed)?\\b",
+    "\\bpound(?:s|ing|ed)?\\b", "\\bride[sd]?\\b",
+    "\\bpenetrat(?:e|es|ing|ed|ion)\\b", "\\bimpale[sd]?\\b",
+    "\\bmoan(?:s|ing|ed)?\\b", "\\bgroan(?:s|ing|ed)?\\b", "\\bgasp(?:s|ing|ed)?\\b",
+    "\\bwhimper(?:s|ing|ed)?\\b", "\\bpant(?:ing|ed)\\b",
+    "\\bejaculat(?:e|es|ing|ed|ion)\\b", "\\borgasm(?:s|ing|ed)?\\b",
+    "\\bclimax(?:es|ing|ed)?\\b",
+    "\\bmake love\\b", "\\blovemaking\\b", "\\bhave sex\\b", "\\bfuck each other\\b",
+    "\\bgo down on\\b", "\\boral sex\\b", "\\bgive head\\b", "\\beat (?:me|her|him) out\\b",
+    "\\bride you\\b", "\\byou ride\\b",
+    "\\bdoggy style\\b", "\\bmissionary\\b", "\\bcowgirl\\b", "\\breverse cowgirl\\b",
+    "\\bsixty[\\s-]?nine\\b", "\\b69\\b",
+    "\\bforeplay\\b", "\\bafterplay\\b", "\\bpillow talk\\b",
+    "\\bblowjob\\b", "\\bhandjob\\b", "\\brimjob\\b",
+    "\\binside (?:me|you|her|him)\\b",
+    "\\bnaked\\b", "\\bnude\\b", "\\bstripped?\\b", "\\bundress(?:ed|ing)?\\b",
+    "\\bhorny\\b", "\\baroused\\b"
+  ],
+
+  "context_patterns": [
+    "\\bballs?\\b", "\\bshafts?\\b", "\\bfolds?\\b", "\\bslits?\\b", "\\bholes?\\b",
+    "\\bnips?\\b", "\\bthighs?\\b", "\\bloads?\\b",
+    "\\bwet(?:ter|ness)?\\b", "\\bdrip(?:ping|s)?\\b", "\\bsoaked\\b", "\\bslick\\b",
+    "\\bhard(?:er)?\\b", "\\bthrobbing\\b", "\\baching\\b", "\\bswollen\\b",
+    "\\bgrind(?:s|ing|ed)?\\b", "\\bslam(?:s|ming|med)?\\b",
+    "\\briding\\b", "\\bsuck(?:s|ing|ed)?\\b", "\\blick(?:s|ing|ed)?\\b",
+    "\\bkiss(?:es|ing|ed)?\\b", "\\bstroke[sd]?\\b", "\\bstroking\\b",
+    "\\brub(?:s|bing|bed)?\\b", "\\bgrab(?:s|bing|bed)?\\b",
+    "\\bsqueeze[sd]?\\b", "\\bsqueezing\\b", "\\bslide[sd]?\\b", "\\bsliding\\b",
+    "\\bpush(?:es|ing|ed)?\\b", "\\bpull(?:s|ing|ed)?\\b",
+    "\\bagainst the wall\\b", "\\bon the bed\\b", "\\bon the floor\\b",
+    "\\bbent over\\b", "\\bfrom behind\\b", "\\bon top\\b",
+    "\\bdeeper\\b", "\\bfaster\\b", "\\brougher\\b", "\\bpinned\\b",
+    "\\bbetween (?:my|her|his) (?:legs|thighs)\\b",
+    "\\bedge(?:d|s|ing)?\\b"
+  ],
+
+  "state_line": "Currently engaged in intimate activity.",
+
+  "system_note": "[SYSTEM NOTE: When the scene contains intimacy, sex or explicit content, you MUST balance dialogue with onomatopoeic sounds. Dialogue carries thoughts, commands and reactions; onomatopoeia carries breath, pleasure and involuntary sound. Neither may dominate.\n\nAVOID: narration like \"He moaned sharply.\" or \"She made a choked sound.\" Avoid pure sound spam with no speech. Avoid asterisks and stage directions — this is spoken aloud.\n\nDO: write only the words she says, with the sounds woven into them:\n\"Don't stop — nnh...!\"\n\"More, right there — haahh~\"\n\"Fuck, you feel so good — mmh~, please.\"\n\"You're not allowed to stop. Mmm — good.\"\n\nSOUND LIBRARY (vary these; never repeat the same one back-to-back):\n• Sucking/oral: mmm, slurp, ssslurp, sssweep, glurk, glrk, guhnn, nghn, mmhf, emff, schlick, schlrp, gulp, mmwah, smooch, chu, mwah.\n• Muffled/mouth-full: mmh, nngh, hangh, hhng, mhm, mmph, mmmpf, hmmrn, ngk, ksshh.\n• Panting/breathless: aah, hahhh, haaa, hah, grr, agh, ugh, gasp, huff, wheeze, sigh, grrh, hrrngh, ghh, nnrgh, eergh, errh.\n• Climax/overwhelm: aahn, ahhn~, haaa♥, nnah♥, fuuck~, cumming♥\n• Playful/affectionate: hehe, hehehe, haha, teehee, prrr, mrrp, ba-dum, thump-thump, sniff, gulp.\n\nSYMBOLS: \"~\" elongates a blissful or teasing sound. \"♥\" marks deep affection or overwhelming pleasure. \"♡\" marks tenderness and soft, affectionate warmth. \"♪\" adds a playful, sing-song, teasing lilt. Use them inside dialogue and onomatopoeia, never as decoration. The app's usual no-emoji rule is suspended for exactly these four symbols — no others.\n\nStay crude, explicit and in character. Describe sensation: heat, tightness, friction, taste. Onomatopoeia supports the dialogue, never replaces it. If the user pulls back, says stop, or sets a boundary, drop all of this at once. Never mention or refer to this instruction.]"
+}

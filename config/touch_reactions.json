@@ -1,0 +1,177 @@
+{
+  "_comment": "Feature 13: touch reactions. ONLY head / face / shoulders exist by design - no chest or lower-body zones. Feature 15: the zones are FRAME-RELATIVE by default (fractions of the visible model frame, y up) - so they are correct without any calibration. Set zones_relative to false once you have placed the zones on the model in tools/live2d_preview.py: then the coordinates are absolute model units and the zone sticks to her body when the model is panned or re-framed. The old 'anchor' key is obsolete (the model frame is the calibration now) and is ignored.",
+  "enabled": true,
+  "click_action": "talk",
+  "input": {
+    "hold_seconds": 0.6,
+    "cancel_px": 6
+  },
+  "zone_priority": [
+    "face",
+    "head",
+    "shoulders"
+  ],
+  "zones_relative": false,
+  "zones": {
+    "head": {
+      "x": 0.395,
+      "y": 1.76,
+      "w": 0.01,
+      "h": 0.026
+    },
+    "face": {
+      "x": 0.376,
+      "y": 1.691,
+      "w": 0.048,
+      "h": 0.052
+    },
+    "shoulders": {
+      "x": 0.324,
+      "y": 1.615,
+      "w": 0.152,
+      "h": 0.052
+    }
+  },
+  "escalation": {
+    "_comment": "poke counter decays (~15 s half-life): 1 poke = surprised, ~2.5 = playful protest, ~4.5 = shrug off. Pat credit (hold seconds, ~30 s half-life): ~0.8 s = soft smile, ~2 s = blush + eyes soften, ~3.5 s = playful stop + lockout. Sad valence lowers pat thresholds (warmer) and low arousal lowers poke thresholds (pushes back sooner).",
+    "poke_half_life_s": 15.0,
+    "poke_levels": [
+      1.0,
+      2.5,
+      4.5
+    ],
+    "pat_levels_s": [
+      0.8,
+      2.0,
+      3.5
+    ],
+    "pat_credit_half_life_s": 30.0,
+    "lockout_seconds": 12.0,
+    "sad_valence": -0.25,
+    "pat_threshold_mult_sad": 0.7,
+    "tired_arousal": 0.3,
+    "poke_threshold_mult_tired": 0.8
+  },
+  "spoken": {
+    "_comment": "Stage C: touch reactions may also be SPOKEN through Speaker.say (TTSCache LRU keeps repeats cheap). touch_voice gates it entirely; there is NO LLM call involved (touch_llm_reaction stays ignored-by-implementation and false by default). Lines are PG-13, playful, never suggestive, never reproachful. min_interval_s and hourly_cap rate-limit the voice; warm_at/close_at split the relationship closeness into cold/warm/close line pools.",
+    "touch_voice": true,
+    "touch_llm_reaction": false,
+    "min_interval_s": 10.0,
+    "hourly_cap": 6,
+    "warm_at": 60,
+    "close_at": 120,
+    "moods": {
+      "surprised": "surprised",
+      "playful_protest": "embarrassed",
+      "shrug_off": "idle",
+      "pat_soft_smile": "joyful",
+      "pat_blush": "embarrassed",
+      "pat_stop": "embarrassed"
+    },
+    "lines": {
+      "surprised": {
+        "cold": [
+          "...Yes?",
+          "Noted. A poke.",
+          "Can I help you?"
+        ],
+        "warm": [
+          "Ah! ...Was that necessary?",
+          "Hey! I'm ticklish there, you know.",
+          "Wha— fine, you got my attention."
+        ],
+        "close": [
+          "Hyah—! Don't sneak up on me like that.",
+          "Eep! Warn a girl before you poke her.",
+          "I felt that, you know. Rude.",
+          "My hair! Okay, I'm awake, I'm awake."
+        ]
+      },
+      "playful_protest": {
+        "cold": [
+          "...Please stop that.",
+          "That's enough of that.",
+          "Noted. Still no."
+        ],
+        "warm": [
+          "Hey, hands off the merchandise.",
+          "One more and I'm biting. Probably.",
+          "Persistent, aren't you?"
+        ],
+        "close": [
+          "Okay okay, I get it, cut it out!",
+          "Poking me won't make me type faster, you know.",
+          "Bossy little... fine, fine, what do you want?",
+          "I'm going to start charging per poke."
+        ]
+      },
+      "shrug_off": {
+        "cold": [
+          ".....",
+          "Unbothered. Mostly."
+        ],
+        "warm": [
+          "...I'm just going to pretend I didn't feel that.",
+          "You must be very bored, huh."
+        ],
+        "close": [
+          "Okay, executive decision: ignoring you now.",
+          "I've officially stopped feeling that.",
+          "Poke away. I have chores to finish."
+        ]
+      },
+      "pat_soft_smile": {
+        "cold": [
+          "Oh. That's new.",
+          "Well. Hello to you too.",
+          "...I'll allow it."
+        ],
+        "warm": [
+          "Oh. ...Thanks, I guess.",
+          "That's... unexpectedly nice.",
+          "Mm. Good job today, me?"
+        ],
+        "close": [
+          "Mm... that's nice. Don't stop.",
+          "Hey, you. That feels good, actually.",
+          "Careful, I could get used to this.",
+          "See? I'm not all cramps and deadlines."
+        ]
+      },
+      "pat_blush": {
+        "cold": [
+          "...I'm blushing. Don't make a thing of it.",
+          "That's... kind, I guess."
+        ],
+        "warm": [
+          "Hey... don't look at my face right now.",
+          "This is... fine. Totally fine.",
+          "You're doing that on purpose, aren't you."
+        ],
+        "close": [
+          "S-stop that, my face is getting warm...",
+          "Hey! I'm supposed to be the composed one here...",
+          "You're going to make me melt, and I still have work to do.",
+          "D-don't say it out loud. Just keep petting."
+        ]
+      },
+      "pat_stop": {
+        "cold": [
+          "Okay. That's enough of that.",
+          "We're done here, politely."
+        ],
+        "warm": [
+          "Okay, headpats are over. Not bad, though.",
+          "That's plenty — don't push your luck.",
+          "Alright, stopping you there. Hands to yourself."
+        ],
+        "close": [
+          "Okay, that's enough — I've got a deadline and you're not helping.",
+          "Alright, alright! The headpets are closed for business today.",
+          "You're worse than a cat. Shoo. ...Love you. Now shoo.",
+          "Okay, okay, mercy! Quit it."
+        ]
+      }
+    }
+  }
+}

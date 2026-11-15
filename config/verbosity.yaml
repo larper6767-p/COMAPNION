@@ -1,0 +1,47 @@
+# ─ Feature 24: long mode — she unpacks when you actually ask ─────────────────
+# For most turns her persona keeps replies short (two-to-four spoken
+# sentences) because that is what a voice companion should sound like.
+# When you really want the full story, this feature lets you ASK for it:
+#
+#   * type /long  -> sticky long mode for the session;  /short puts it back
+#   * or just say "tell me everything" / "go on" / "keep going" inside a
+#     normal message — that stretches ONE turn only, the mode is untouched
+#
+# DISABLED by default (enabled: false): flip it on to try it.  While off,
+# the commands are simply unknown commands and the phrases are normal
+# words; nothing changes anywhere.
+enabled: true
+
+# Text-box / console toggles (exact commands, chat text is never matched).
+long_command: "/long"
+short_command: "/short"
+
+# One-turn stretch triggers (word-boundary, case-insensitive).
+phrases:
+  - tell me everything
+  - go on
+  - keep going
+  - don't stop
+  - the long story
+  - the whole story
+  - unpack it
+  - go long
+  - walk me through it
+  - with all the details
+  - lay it on me
+
+# The override paragraph appended LAST to the system prompt on a long turn,
+# so it beats the earlier length rules.  It also cancels her end-on-multiple
+# questions habit (feature-owned text; persona file stays untouched).
+suffix: >-
+  SUSPENSION AND OVERRIDE (this turn only): ignore every earlier
+  reply-length rule ("two to four short sentences", "under 500
+  characters", any character cap). For this message, talk long and
+  unpacked - 400 to 1200 words as the thought needs, letting the story
+  breathe. Keep the spoken-aloud style and the mood/tag system exactly as
+  directed elsewhere. Do not stack questions: at most one short question
+  at the very end, or land on a statement.
+
+# Spoken confirmations when the toggles are used (feature-owned lines).
+feedback_on: "Long mode on. Big questions get the full unpacking now."
+feedback_off: "Normal chatter for me."

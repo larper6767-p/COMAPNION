@@ -1,0 +1,20 @@
+{
+  "_comment": "Feature 8: mood-driven delivery.  Per-mood TTS speed, a spoken interjection on the first line of a reply, and an optional fallback gesture.  speed = multiplier on voice_speed (clamped 0.5-2.0 overall).  interjections = short spoken lead-ins, at most one per reply and at most one every cooldown_turns replies (chance = probability per eligible reply).  gesture = one of body_actions.json's enabled gestures (nod/shake/tilt), or null; it only fires when the reply itself emitted no gesture/wink tag.  Set enabled:false to disable everything.",
+
+  "enabled": true,
+  "cooldown_turns": 3,
+  "chance": 1.0,
+
+  "moods": {
+    "joyful":      { "speed": 1.05, "interjections": ["Ha!", "Heh.", "Mm-hm!"],  "gesture": null },
+    "excited":     { "speed": 1.10, "interjections": ["Yes!", "Oh,", "Eee!"],     "gesture": null },
+    "embarrassed": { "speed": 0.95, "interjections": ["Ah,", "W-wait."],          "gesture": null },
+    "sad":         { "speed": 0.90, "interjections": ["...Mm.", "Oh,"],           "gesture": null },
+    "angry":       { "speed": 1.05, "interjections": ["Hmph.", "Tch."],           "gesture": null },
+    "surprised":   { "speed": 1.10, "interjections": ["Ah!", "W-what?"],          "gesture": null },
+    "curious":     { "speed": 1.00, "interjections": ["Hmm?", "Oh?"],             "gesture": null },
+    "relaxed":     { "speed": 0.95, "interjections": ["Mm.", "Hahh..."],          "gesture": null },
+    "love":        { "speed": 0.95, "interjections": ["Mmm.", "Hee."],            "gesture": null },
+    "aroused":     { "speed": 0.90, "interjections": ["Nn...!", "Hahh..."],       "gesture": null }
+  }
+}

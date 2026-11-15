@@ -1,0 +1,86 @@
+# ─ Features 21+22: patient turn-taking + her listening noises ────────────────
+# A person doesn't answer the second you stop for breath, and doesn't sit
+# mute while you rattle on, either.  When enabled:
+#
+#   * every pause in your speech gets a partial Whisper check ("what did
+#     they JUST say?"); an open-ended tail ("…and then we went to the")
+#     buys her extra patience, a complete phrase ("…right? yeah") ends the
+#     turn once the end-silence is held;
+#   * mid-monologue, in the short silence window, she gives one small
+#     listening noise ("Mhm…", "Right, right…") — you keep the floor; the
+#     recorder drops the echoed mic tail so her noise never reaches the
+#     transcript.
+#
+# DISABLED by default (enabled: false): this changes her listening manner,
+# run-time testable first, one YAML flip later.  The old fixed capture
+# (silence stop at 2.0 s) is exactly what happens while this is off.
+enabled: true
+
+# ── Endpointing (Feature 21) ──────────────────────────────────────────────────
+end_silence_s: 1.6        # hold silence this long once a phrase is complete
+max_grace_s: 3.0          # extra patience an open-tailed phrase buys
+min_words_grace_s: 1.5    # extra patience while almost nothing was heard yet
+min_words: 2              # fewer words than this → not done yet (noise floor)
+tail_window_s: 12.0       # how much of the latest audio the partial Whisper sees
+
+# A sentence tailing into one of these words counts as open ("…and then I
+# went to the…"); a closing mark (. ? !) settles it.  Editable freely.
+open_words:
+  - and
+  - or
+  - but
+  - so
+  - because
+  - like
+  - then
+  - when
+  - that
+  - which
+  - who
+  - the
+  - a
+  - an
+  - to
+  - of
+  - in
+  - on
+  - my
+  - with
+  - for
+  - is
+  - was
+  - are
+  - um
+  - uh
+  - maybe
+  - probably
+
+# ── Listening noises (Feature 22) ─────────────────────────────────────────────
+backchannels: true              # needs the top-level enabled as well
+backchannel_from_s: 0.9         # silence window her noises may fire in:
+backchannel_to_s: 1.4           #   ≥0.9s in, <1.4s in — clearly still at it
+backchannel_min_speech_s: 6.0   # user must have been talking this long
+backchannel_gap_s: 9.0          # at most one noise every X seconds
+mute_s: 0.7                     # mic-tail dropped after her noise plays
+
+# ── Post-flow grace (Feature 25) ─────────────────────────────────────────────
+# Needs the master enabled above.  AFTER she decides you're done — the
+# silence threshold met, or the partial-transcript judge said done — she
+# keeps listening this many extra seconds.  Speak again inside that window
+# and she folds it into the SAME recording (the cutoff is REVERSED and she
+# keeps listening); stay quiet and the stop fires just this many seconds
+# later.  3.0 feels roomy; lower it if each reply now starts too slowly;
+# 0 turns the grace off (plain cut-at-threshold behavior).
+post_grace_s: 3.0
+
+# Her tiny non-turn-taking lines (feature-owned: persona stays untouched).
+backchannel_lines:
+  - "Mhm."
+  - "Right, right…"
+  - "Yeah…"
+  - "No way."
+  - "Really?"
+  - "Okay…"
+  - "Go on, I'm listening."
+  - "I know, right?"
+  - "Uh-huh."

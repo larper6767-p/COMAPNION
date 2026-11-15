@@ -1,0 +1,36 @@
+# ── Feature 4: On-demand screen vision ────────────────────────────────────────
+# Press the hotkey and Evelyn grabs ONE frame of your screen, keeps it in memory,
+# and looks at it on your next message.  Nothing is captured until you press the
+# hotkey, and the image is NEVER written to disk.
+#
+# Scope: the capture is the WORK AREA (taskbar excluded) of the monitor that
+# contains the ACTIVE window — never the merged multi-monitor desktop.
+#
+# Pressing the hotkey does NOT start a turn; the shot is attached to your next
+# message (no surprise LLM call).  In-memory only, expires after ttl_seconds.
+
+enabled: false
+
+# Global hotkey.  Deliberately NOT ctrl+shift+s (that is scene1_hotkey in
+# config/live2d.json).  A startup warning is logged if this collides with any
+# other configured hotkey.
+hotkey: "ctrl+alt+s"
+
+# "monitor"       -> the active window's whole monitor (work area)
+# "active_window" -> just the active window, clipped to that monitor
+mode: "monitor"
+
+# How long a capture stays armed, waiting for your next message (seconds).
+ttl_seconds: 30
+
+# Model used for image turns.  "" = reuse the normal chat model.
+# The configured backend must be able to accept images (a multimodal model);
+# otherwise the provider will reject the request and the turn falls back.
+# Example (Ollama):  vision_model: "llava"
+vision_model: ""
+
+# Downscale wide captures before sending, to keep image tokens sane (0 = off).
+max_width: 1280
+
+# Flash a status message + write one log line for every capture.
+indicator: true
