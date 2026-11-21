@@ -67,6 +67,19 @@ def test_analyze_aggregates_turns_and_usage():
     assert stats["finish_reasons"] == {"stop": 1}
 
 
+def test_since_filters_by_line_timestamp():
+    text = (
+        "2026-11-21 21:00:00 [prompt] total=1 budget=off sys=1 hist=0 "
+        "msgs=0/0 all=0 trimmed=0 image=no sections=persona:1\n"
+        "2026-11-21 22:00:00 [prompt] total=2 budget=off sys=2 hist=0 "
+        "msgs=0/0 all=0 trimmed=0 image=no sections=persona:2\n"
+    )
+    records = parse_lines(text, since="2026-11-21 21:30:00")
+    assert [r["total"] for r in records] == [2]
+    records = parse_lines(text, since="2026-11-21")
+    assert [r["total"] for r in records] == [1, 2]
+
+
 def test_analyze_empty_is_safe():
     stats = analyze([])
     assert stats["turns"] == 0

@@ -62,6 +62,7 @@ fixed 2048-token context.
 ```powershell
 .\.venv\Scripts\python.exe tools\measure_prompt.py
 .\.venv\Scripts\python.exe tools\measure_prompt.py --days 7
+.\.venv\Scripts\python.exe tools\measure_prompt.py --since "2026-11-21 22:00:00"
 .\.venv\Scripts\python.exe tools\measure_prompt.py --json
 ```
 

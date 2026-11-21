@@ -79,7 +79,7 @@ def test_build_messages_preserves_default_history_window():
         for i in range(40)
     ]
     obj.history = history
-    messages = obj.build_messages(query=None)
+    messages = obj.build_messages(query=None, log=False)
     assert messages[0]["role"] == "system"
     assert messages[1:] == history[-obj.config.max_history:]
     assert obj.last_prompt_report.history_kept == obj.config.max_history
@@ -88,7 +88,7 @@ def test_build_messages_preserves_default_history_window():
 
 def test_web_block_is_appended_at_the_same_place_and_counted():
     VoiceCompanion, obj = _companion()
-    obj.build_messages(query=None, web_block="LIVE WEB SNIPPET")
+    obj.build_messages(query=None, web_block="LIVE WEB SNIPPET", log=False)
     assert "LIVE WEB SNIPPET" in obj._prompt_sections[-1][1]
     assert obj._prompt_sections[-1][0] == "web"
     assert obj.last_prompt_report.section_dict().get("web", 0) > 0
@@ -110,7 +110,7 @@ def test_hard_budget_trims_outgoing_copy_only(tmp_path):
         for i in range(10)
     ]
     obj.history = history
-    messages = obj.build_messages(query=None)
+    messages = obj.build_messages(query=None, log=False)
     report = obj.last_prompt_report
     assert len(messages) == 3                 # system + 2 newest messages
     assert messages[1:] == history[-2:]
@@ -129,7 +129,7 @@ def test_zero_budget_is_observe_only(tmp_path):
         {"role": "assistant", "content": "old reply"},
         {"role": "user", "content": "new"},
     ]
-    messages = obj.build_messages(query=None)
+    messages = obj.build_messages(query=None, log=False)
     assert len(messages) == 4
     assert obj.last_prompt_report.budget_tokens == 0
     assert obj.last_prompt_report.trimmed is False
@@ -143,7 +143,7 @@ def test_finalize_attaches_provider_usage_once():
         get_last_usage=lambda: {"prompt": 123, "completion": 17},
         get_last_finish_reason=lambda: "stop",
     )
-    obj.build_messages(query=None)
+    obj.build_messages(query=None, log=False)
     VoiceCompanion._finalize_prompt_report(obj)
     report = obj.last_prompt_report
     assert report.actual_prompt_tokens == 123

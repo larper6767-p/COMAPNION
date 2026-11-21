@@ -27,13 +27,14 @@ from typing import Iterable, List, Sequence, Tuple
 ROOT = Path(__file__).resolve().parent.parent
 
 DEFAULT_DATA_PATHS: Tuple[str, ...] = (
-    "config/memory.json",
-    "config/relationship.json",
-    "config/pet_state.json",
+    "state/memory.json",
+    "state/relationship.json",
+    "state/pet_state.json",
+    "state/threads_state.json",
+    "state/websearch_cache.json",
+    "state/episodes",
+    "state/archive",
     "config/behavior_state.json",
-    "config/threads_state.json",
-    "config/episodes",
-    "config/archive",
     "memory_store",
 )
 

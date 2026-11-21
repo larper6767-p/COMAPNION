@@ -4,7 +4,11 @@ import logging
 import threading
 from datetime import datetime, date
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+
+import shutil
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 logger = logging.getLogger(__name__)
 
@@ -197,15 +201,34 @@ class MemoryManager:
 
     def __init__(
         self,
-        config_dir: Path,
-        tiers: Dict[str, str],
+        config_dir: Optional[Path] = None,
+        state_dir: Optional[Path] = None,
+        tiers: Optional[Dict[str, str]] = None,
         closeness_enabled: bool = True,
         vector_store: Any = None,
+        data_dir: Optional[Path] = None,
+        runtime_dir: Optional[Path] = None,
     ):
+        provided_config_dir = config_dir is not None
+        if config_dir is None:
+            config_dir = PROJECT_ROOT / "config"
+        if state_dir is None:
+            state_dir = data_dir if data_dir is not None else runtime_dir
+        # Backward-compatible default: callers that only name a config directory
+        # keep runtime state beside it.  New callers pass state_dir explicitly.
+        if state_dir is None:
+            state_dir = config_dir
+        self._config_dir_provided = provided_config_dir
         self.config_dir = Path(config_dir)
-        self.episode_store = EpisodeStore(self.config_dir / "episodes")
+        self.state_dir = Path(state_dir)
+        self.data_dir = self.state_dir
+        self.runtime_dir = self.state_dir
+        if tiers is None:
+            tiers = {}
+        self._migrate_runtime_state()
+        self.episode_store = EpisodeStore(self.state_dir / "episodes")
         self.relationship = RelationshipTracker(
-            save_path=self.config_dir / "relationship.json",
+            save_path=self.state_dir / "relationship.json",
             tiers=tiers,
         )
         self.closeness_enabled = closeness_enabled
@@ -214,6 +237,45 @@ class MemoryManager:
         # exact pre-feature behaviour — nothing is embedded or searched.
         self.vector_store: Any = vector_store
         self._vector_top_k: int = 4
+
+    def _migrate_runtime_state(self) -> None:
+        if not getattr(self, "_config_dir_provided", False):
+            return
+        if self.state_dir.resolve() == self.config_dir.resolve():
+            return
+        try:
+            self.state_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            return
+        for name in ("memory.json", "relationship.json"):
+            source = self.config_dir / name
+            target = self.state_dir / name
+            if source.is_file() and not target.exists():
+                try:
+                    shutil.copy2(source, target)
+                except OSError:
+                    pass
+        source_episodes = self.config_dir / "episodes"
+        target_episodes = self.state_dir / "episodes"
+        if source_episodes.is_dir():
+            if not target_episodes.exists():
+                try:
+                    shutil.copytree(source_episodes, target_episodes)
+                except OSError:
+                    pass
+            else:
+                for item in source_episodes.rglob("*"):
+                    if not item.is_file():
+                        continue
+                    relative = item.relative_to(source_episodes)
+                    destination = target_episodes / relative
+                    if destination.exists():
+                        continue
+                    try:
+                        destination.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(item, destination)
+                    except OSError:
+                        pass
 
     # ── Vector memory (Feature 2) ─────────────────────────────────────────────
 

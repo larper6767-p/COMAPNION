@@ -196,7 +196,7 @@ def test_she_asks_the_web_question_per_turn():
     assert "from core import websearch as _web" in src
     assert "_web.get_config()" in src
     assert "_web.parse_decision(full)" in src
-    assert "_web.SearchCache()" in src
+    assert "_web.SearchCache(state_dir=" in src
 
 
 def test_app_injects_web_block_into_system_message():
