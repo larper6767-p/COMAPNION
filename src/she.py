@@ -640,6 +640,7 @@ class VoiceCompanion:
         query: Optional[str] = None,
         web_block: Optional[str] = None,
         has_image: bool = False,
+        log: bool = True,
     ) -> List[Dict[str, str]]:
         """Build the real outgoing message list and record its size.
 
@@ -647,6 +648,8 @@ class VoiceCompanion:
         prompt is unchanged; optional web context is appended exactly where it
         used to be; history is the newest ``max_history`` messages, then the
         oldest are trimmed only when the configured hard budget requires it.
+        ``log=False`` suppresses the per-turn plan line (used by tests and
+        other synthetic callers).
         """
         system = self.system_message(query=query)
         if web_block:
@@ -671,11 +674,15 @@ class VoiceCompanion:
         )
         self.last_prompt_report = report
         self._prompt_report_finalized = False
-        prompt_budget.log_plan(report, cfg, logger)
+        if log:
+            prompt_budget.log_plan(report, cfg, logger)
         return [system] + selected
 
-    def _finalize_prompt_report(self) -> None:
-        """Attach the provider's real usage to the last prompt report once."""
+    def _finalize_prompt_report(self, log: bool = True) -> None:
+        """Attach the provider's real usage to the last prompt report once.
+
+        ``log=False`` suppresses the usage line; the report is still updated.
+        """
         report = getattr(self, "last_prompt_report", None)
         if report is None or getattr(self, "_prompt_report_finalized", False):
             return
@@ -695,7 +702,8 @@ class VoiceCompanion:
             finish = str(getattr(self.model, "last_finish_reason", "") or "")
         report = report.with_usage(prompt_tokens, completion_tokens, finish)
         self.last_prompt_report = report
-        prompt_budget.log_usage(report, self._prompt_budget_config(), logger)
+        if log:
+            prompt_budget.log_usage(report, self._prompt_budget_config(), logger)
 
     # ── History management with summarization ─────────────────────────────────
 

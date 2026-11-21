@@ -12,6 +12,7 @@ compared before/after.
 Run:
     .venv\\Scripts\\python.exe tools\\measure_prompt.py
     .venv\\Scripts\\python.exe tools\\measure_prompt.py --days 7
+    .venv\\Scripts\\python.exe tools\\measure_prompt.py --since "2026-11-21 22:00:00"
     .venv\\Scripts\\python.exe tools\\measure_prompt.py --json
 
 Pure functions (parse_lines / analyze) are importable for tests.
@@ -31,6 +32,7 @@ LOG_DIR = ROOT / "logs"
 _FIELD_RE = re.compile(r"([A-Za-z_]+)=([^\s]+)")
 _PLAN_MARK = "[prompt] total="
 _USAGE_MARK = "[prompt] usage "
+_LOG_TS_RE = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
 
 
 def _int(value: Any, default: int = 0) -> int:
@@ -47,10 +49,20 @@ def _float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def parse_lines(text: str) -> List[Dict[str, Any]]:
-    """Extract prompt reports from raw log text; ignore everything else."""
+def parse_lines(text: str,
+                since: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Extract prompt reports from raw log text; ignore everything else.
+
+    ``since`` is an optional ``YYYY-MM-DD`` or ``YYYY-MM-DD HH:MM:SS`` lower
+    bound applied to the leading timestamp of each log line.
+    """
     records: List[Dict[str, Any]] = []
+    cutoff = (since or "").strip()
     for line in str(text or "").splitlines():
+        if cutoff:
+            match = _LOG_TS_RE.match(line)
+            if match and match.group(1) < cutoff:
+                continue
         if _PLAN_MARK in line:
             fields = dict(_FIELD_RE.findall(line))
             if "total" not in fields:
@@ -182,6 +194,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="Log directory (default: logs)")
     parser.add_argument("--days", type=float, default=None,
                         help="Only include logs modified in the last N days")
+    parser.add_argument("--since", default=None,
+                        help="Only include log lines at or after this "
+                             "YYYY-MM-DD or 'YYYY-MM-DD HH:MM:SS' timestamp")
     parser.add_argument("--json", action="store_true",
                         help="Print machine-readable JSON")
     args = parser.parse_args(argv)
@@ -191,7 +206,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not paths:
         print("No Evelyn logs found.", file=sys.stderr)
         return 1
-    records = parse_lines(read_logs(paths))
+    records = parse_lines(read_logs(paths), since=args.since)
     stats = analyze(records)
     if args.json:
         print(json.dumps(stats, indent=2, sort_keys=True))

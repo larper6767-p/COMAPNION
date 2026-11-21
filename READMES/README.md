@@ -231,7 +231,7 @@ than deleting them.
 | `tools/backup_data.py` | Create or restore a portable data backup |
 | `tools/memory_doctor.py` | Read-only JSON/vector drift report |
 | `tools/measure_cadence.py` | Question/beat/note metrics from episodes |
-| `tools/measure_prompt.py` | Prompt-size and provider-usage summary from logs |
+| `tools/measure_prompt.py` | Prompt-size and provider-usage summary from logs (supports `--since`) |
 | `tools/live2d_preview.py` | Tune framing, liveliness, and body behavior |
 | `tools/diagnose_live2d.py` | Live2D/system diagnostics (`diagnose.bat`) |
 | `tools/gen_sfx.py` | Generate SFX clips in her voice |
