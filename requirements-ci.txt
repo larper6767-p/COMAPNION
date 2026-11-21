@@ -8,6 +8,7 @@ faster-whisper
 fish-audio-sdk
 numpy
 ollama
+pillow
 pygame-ce
 PySide6
 python-dotenv
