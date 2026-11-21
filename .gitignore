@@ -17,6 +17,9 @@ config/relationship.json
 config/pet_state.json
 config/threads_state.json
 config/websearch_cache.json
+
+# Runtime state directory (Phase 2): all mutable user/runtime data.
+state/
 diagnose_out.txt
 probe_out.txt
 debug_out.txt

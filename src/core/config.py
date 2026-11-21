@@ -4,6 +4,7 @@ import logging
 import logging.handlers
 import os
 import random
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -228,22 +229,53 @@ _DEFAULTS: Dict[str, Any] = {
 class Config:
     """Central configuration with validation, hot-reload, and logging setup."""
 
-    def __init__(self, config_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        config_dir: Optional[Path] = None,
+        state_dir: Optional[Path] = None,
+        data_dir: Optional[Path] = None,
+        runtime_dir: Optional[Path] = None,
+    ):
         if config_dir is None:
             config_dir = PROJECT_ROOT / "config"
+        if state_dir is None:
+            state_dir = data_dir if data_dir is not None else runtime_dir
+        # Keep the default split explicit: configuration stays in config/,
+        # mutable runtime state lives in state/.  A caller that passes only a
+        # config directory keeps the legacy co-located behaviour for
+        # compatibility, while the real app passes the project state directory.
+        if state_dir is None:
+            state_dir = (
+                (Path(config_dir) / "state")
+                if config_dir is not None
+                else PROJECT_ROOT / "state"
+            )
         self.config_dir = Path(config_dir)
+        self.state_dir = Path(state_dir)
+        # Compatibility aliases for callers that name the runtime directory
+        # differently.
+        self.data_dir = self.state_dir
+        self.runtime_dir = self.state_dir
         self.personality_file = self.config_dir / "personality.json"
         local_personality = self.config_dir / "personality.local.json"
         if local_personality.exists():
             self.personality_file = local_personality
-        self.memory_file = self.config_dir / "memory.json"
-        self.episode_dir = self.config_dir / "episodes"
+        self.memory_file = self.state_dir / "memory.json"
+        self.episode_dir = self.state_dir / "episodes"
+        self.relationship_file = self.state_dir / "relationship.json"
+        self.threads_state_file = self.state_dir / "threads_state.json"
+        self.websearch_cache_file = self.state_dir / "websearch_cache.json"
+        self.pet_state_file = self.state_dir / "pet_state.json"
         self.aliveness_file = self.config_dir / "aliveness.yaml"
         self.prompt_budget_file = self.config_dir / "prompt_budget.yaml"
         self.log_dir = PROJECT_ROOT / "logs"
 
         # Set up logging first so everything below is logged
         setup_logging(self.log_dir)
+
+        # One-time migration from the old co-located runtime files.  Existing
+        # state is never overwritten; this only fills a fresh state directory.
+        self._migrate_runtime_state()
 
         # ── LLM / Cloud ────────────────────────────────────────────────────
         self.use_cerebras: bool = True
@@ -327,6 +359,62 @@ class Config:
         self._load_personality()
 
     # ── Public helpers ────────────────────────────────────────────────────────
+
+    # ── Runtime-state migration ───────────────────────────────────────────────
+
+    def _migrate_runtime_state(self) -> None:
+        """Copy legacy runtime files from config/ into state/ once.
+
+        Configuration stays in ``config_dir``; mutable runtime data moves to
+        ``state_dir``.  Existing state files win, so a migration never
+        clobbers current data.
+        """
+        if self.state_dir.resolve() == self.config_dir.resolve():
+            return
+        try:
+            self.state_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            return
+
+        runtime_files = (
+            "memory.json",
+            "relationship.json",
+            "pet_state.json",
+            "threads_state.json",
+            "websearch_cache.json",
+        )
+        for name in runtime_files:
+            source = self.config_dir / name
+            target = self.state_dir / name
+            if source.is_file() and not target.exists():
+                try:
+                    shutil.copy2(source, target)
+                except OSError:
+                    pass
+
+        for dirname in ("episodes", "archive"):
+            source = self.config_dir / dirname
+            target = self.state_dir / dirname
+            if not source.is_dir():
+                continue
+            if not target.exists():
+                try:
+                    shutil.copytree(source, target)
+                except OSError:
+                    pass
+                continue
+            for item in source.rglob("*"):
+                if not item.is_file():
+                    continue
+                relative = item.relative_to(source)
+                destination = target / relative
+                if destination.exists():
+                    continue
+                try:
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(item, destination)
+                except OSError:
+                    pass
 
     def reload(self) -> None:
         """Hot-reload personality.json without restarting."""

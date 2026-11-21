@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG_PATH = ROOT / "config" / "websearch.yaml"
-CACHE_PATH = ROOT / "config" / "websearch_cache.json"
+CACHE_PATH = ROOT / "state" / "websearch_cache.json"
 
 DEFAULTS: Dict[str, Any] = {
     "enabled": False,       # OFF by default: decisions cost an LLM call per turn
@@ -258,8 +258,33 @@ def _from_iso(s: str) -> datetime:
 class SearchCache:
     """config/websearch_cache.json — {key: {t: iso, hits: [...]}} rows."""
 
-    def __init__(self, path: Path = CACHE_PATH) -> None:
+    def __init__(
+        self,
+        path: Optional[Path] = None,
+        state_dir: Optional[Path] = None,
+        config_dir: Optional[Path] = None,
+        data_dir: Optional[Path] = None,
+        runtime_dir: Optional[Path] = None,
+    ) -> None:
+        if path is None:
+            if state_dir is None:
+                state_dir = data_dir if data_dir is not None else runtime_dir
+            if state_dir is None and config_dir is not None:
+                state_dir = config_dir
+            if state_dir is not None:
+                path = Path(state_dir) / "websearch_cache.json"
+            else:
+                path = CACHE_PATH
         self.path = Path(path)
+        if state_dir is not None and config_dir is not None:
+            legacy = Path(config_dir) / "websearch_cache.json"
+            if legacy.is_file() and not self.path.exists():
+                try:
+                    self.path.parent.mkdir(parents=True, exist_ok=True)
+                    import shutil
+                    shutil.copy2(legacy, self.path)
+                except OSError:
+                    pass
 
     def _load(self) -> Dict[str, Any]:
         try:

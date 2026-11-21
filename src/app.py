@@ -155,6 +155,7 @@ except Exception as _live2d_err:
 # ── CLI args ──────────────────────────────────────────────────────────────────
 ap = argparse.ArgumentParser()
 ap.add_argument("--config-dir", default=None)
+ap.add_argument("--state-dir", default=None)
 ap.add_argument("--hotkey", default="f9")
 ap.add_argument("--art", default=None)
 ap.add_argument("--size", type=int, default=None,
@@ -163,7 +164,7 @@ args = ap.parse_args()
 
 # ── Live2D config (size + framing) ────────────────────────────────────────────
 LIVE2D_CFG_FILE = ROOT / "config" / "live2d.json"
-STATE_FILE      = ROOT / "config" / "pet_state.json"
+STATE_FILE      = ROOT / "state" / "pet_state.json"
 ART_DIR         = ROOT / "characters" / "marin"           # overridden in main()
 
 def _load_live2d_cfg() -> dict:
@@ -304,7 +305,7 @@ _BREATH_PAUSE_HOLD = _live2d_cfg.get("breath_pause_hold", [1.0, 1.5])
 _LIP_SYNC_ENABLED = bool(_live2d_cfg.get("lip_sync_enabled", True))
 _LIP_SYNC_OFFSET_MS = float(_live2d_cfg.get("lip_sync_offset_ms", 0.0))
 
-RELATIONSHIP_FILE = ROOT / "config" / "relationship.json"
+RELATIONSHIP_FILE = ROOT / "state" / "relationship.json"
 
 
 def _closeness_baseline() -> float:
@@ -3071,7 +3072,16 @@ def main():
     app.setQuitOnLastWindowClosed(False)
 
     print("Loading Whisper, voice, and model (this may take a few seconds)…")
-    config = Config(config_dir=Path(args.config_dir) if args.config_dir else None)
+    config = Config(
+        config_dir=Path(args.config_dir) if args.config_dir else None,
+        state_dir=Path(args.state_dir) if args.state_dir else ROOT / "state",
+    )
+    # Phase 2: runtime state lives in state/, not config/.  Keep the module-level
+    # paths aligned with the selected state directory for Pet and thread storage.
+    global STATE_FILE, RELATIONSHIP_FILE, _THREADS_STATE_PATH
+    STATE_FILE = config.state_dir / "pet_state.json"
+    RELATIONSHIP_FILE = config.state_dir / "relationship.json"
+    _THREADS_STATE_PATH = config.state_dir / "threads_state.json"
     bus = Bus()
     companion = PetCompanion(config, bus)
     _companion_ref = companion

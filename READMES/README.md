@@ -153,6 +153,7 @@ Feature behavior lives in separate, feature-owned files:
 | `config/aliveness.yaml` | Turn shape, listening, narration, self-notes, opinions |
 | `config/memory.yaml` | Vector memory, collection, embedding, `top_k` |
 | `config/live2d.json` | Renderer, face size/frame, body control, motion budget |
+| `state/` | Runtime state: memory, episodes, relationship, pet geometry, caches |
 | `config/behavior_state.json` | Behavior-state tuning |
 | `config/body_actions.json` | Mood/body-action vocabulary |
 | `config/touch_reactions.json` | Touch zones and reactions |
@@ -173,10 +174,10 @@ Feature behavior lives in separate, feature-owned files:
 | `config/verbosity.yaml` | Reply length policy |
 | `config/prompt_budget.yaml` | Prompt size accounting and optional history budget |
 
-Runtime state is auto-managed in `config/memory.json`,
-`config/relationship.json`, `config/pet_state.json`, `config/episodes/`, and
-`config/threads_state.json`. Do not hand-edit runtime state while the app is
-running.
+Runtime state is auto-managed in `state/memory.json`,
+`state/relationship.json`, `state/pet_state.json`, `state/episodes/`, and
+`state/threads_state.json`. Legacy files under `config/` are migrated on first
+run. Do not hand-edit runtime state while the app is running.
 
 ### Logging
 

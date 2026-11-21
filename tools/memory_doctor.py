@@ -231,10 +231,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     root = Path(args.root).resolve()
     config_dir = root / "config"
+    state_dir = root / "state"
     store, collection = _resolve_store(
         root, config_dir / "memory.yaml", args.store, args.collection)
-    facts = load_facts(config_dir / "memory.json")
-    summaries = load_summaries(config_dir / "episodes" / "summaries.json")
+    facts = load_facts(state_dir / "memory.json")
+    summaries = load_summaries(state_dir / "episodes" / "summaries.json")
     vectors = read_vectors(store, collection)
     report = build_report(facts, summaries, vectors)
     if args.json:

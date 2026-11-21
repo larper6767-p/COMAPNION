@@ -30,7 +30,7 @@ from typing import Any, Dict, List, Optional
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG_PATH = ROOT / "config" / "threads.yaml"
-STATE_PATH = ROOT / "config" / "threads_state.json"
+STATE_PATH = ROOT / "state" / "threads_state.json"
 
 DEFAULTS: Dict[str, Any] = {
     "enabled": True,          # OFF by default: extraction costs an LLM call
@@ -149,8 +149,33 @@ def parse_extraction(text: str) -> Optional[str]:
 class ThreadStore:
     """Persisted store of open threads (one JSON file)."""
 
-    def __init__(self, path: Optional[Path] = None) -> None:
-        self.path = Path(path) if path is not None else STATE_PATH
+    def __init__(
+        self,
+        path: Optional[Path] = None,
+        state_dir: Optional[Path] = None,
+        config_dir: Optional[Path] = None,
+        data_dir: Optional[Path] = None,
+        runtime_dir: Optional[Path] = None,
+    ) -> None:
+        if path is None:
+            if state_dir is None:
+                state_dir = data_dir if data_dir is not None else runtime_dir
+            if state_dir is None and config_dir is not None:
+                state_dir = config_dir
+            if state_dir is not None:
+                path = Path(state_dir) / "threads_state.json"
+            else:
+                path = STATE_PATH
+        self.path = Path(path)
+        if state_dir is not None and config_dir is not None:
+            legacy = Path(config_dir) / "threads_state.json"
+            if legacy.is_file() and not self.path.exists():
+                try:
+                    self.path.parent.mkdir(parents=True, exist_ok=True)
+                    import shutil
+                    shutil.copy2(legacy, self.path)
+                except OSError:
+                    pass
         self._threads: List[Thread] = []
         self.load()
 

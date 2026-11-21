@@ -71,6 +71,7 @@ class VoiceCompanion:
         # ── Memory ────────────────────────────────────────────────────────────
         self.memory = MemoryManager(
             config_dir=config.config_dir,
+            state_dir=config.state_dir,
             tiers=config.closeness_tiers,
             closeness_enabled=config.closeness_enabled,
         )
@@ -1005,7 +1006,7 @@ class VoiceCompanion:
                 return None
             cache = getattr(self, "_web_cache", None)
             if cache is None:
-                cache = _web.SearchCache()
+                cache = _web.SearchCache(state_dir=getattr(self.config, "state_dir", None))
                 self._web_cache = cache
             hits = _web.perform(query, cfg, cache=cache, now=now)
             logger.info(f"[websearch] {query!r}: {len(hits)} result(s)")
