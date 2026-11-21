@@ -5,7 +5,7 @@ faster-whisper            # Speech-to-text (Whisper)
 
 # ── Voice & Audio ─────────────────────────────────────────────────────────────
 fishaudio                 # Fish Audio TTS
-pygame                    # Audio playback
+pygame-ce                 # Audio playback (provides the pygame module)
 sounddevice               # Microphone capture
 numpy                     # Audio buffer processing
 pycaw                     # Windows audio ducking (optional but recommended)

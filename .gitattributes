@@ -1,0 +1,14 @@
+# Keep the working tree on CRLF. The project ships Windows batch files and is
+# edited on Windows; Python, tests, config, and docs all use CRLF locally.
+* text=auto
+*.py text eol=crlf
+*.md text eol=crlf
+*.txt text eol=crlf
+*.ini text eol=crlf
+*.cfg text eol=crlf
+*.toml text eol=crlf
+*.yaml text eol=crlf
+*.yml text eol=crlf
+*.json text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf

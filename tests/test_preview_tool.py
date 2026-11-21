@@ -16,6 +16,8 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+pytestmark = pytest.mark.gui
+
 from PySide6.QtWidgets import QWidget          # noqa: E402
 
 ROOT = Path(__file__).parent.parent

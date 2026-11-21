@@ -17,6 +17,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.gui
+
 # Pop poisoned module entries so the real src modules load (test_headless stubs).
 for _m in ("core", "core.config", "core.memory"):
     sys.modules.pop(_m, None)

@@ -8,6 +8,10 @@ import sys
 import types
 import os
 
+import pytest
+
+pytestmark = pytest.mark.gui
+
 # ── Stub out heavy deps before any app import ──────────────────────────────────
 
 def _make_stub(name, **attrs):

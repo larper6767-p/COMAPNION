@@ -12,6 +12,7 @@ persistent memory, and a Live2D/sprite pet.
 | Understand the modules and data flow | [READMES/ARCHITECTURE.md](READMES/ARCHITECTURE.md) |
 | Tune body behavior and animation | [READMES/BEHAVIOR_DIRECTOR.md](READMES/BEHAVIOR_DIRECTOR.md) |
 | Review the feature-by-feature build history | [READMES/CHANGELOG.md](READMES/CHANGELOG.md) |
+| Contribute, run tests, or check privacy rules | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 Quick launch on Windows after `setup.bat`:
 

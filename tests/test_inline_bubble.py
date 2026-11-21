@@ -17,6 +17,8 @@ import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
+pytestmark = pytest.mark.gui
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from core.text_input import InlineBubbleState  # noqa: E402

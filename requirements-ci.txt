@@ -1,0 +1,16 @@
+# Minimal runtime and test dependencies for headless CI.
+#
+# Windows full-suite CI also installs requirements.txt + requirements-dev.txt.
+# This file is intentionally smaller: it omits Windows-only packages
+# (live2d-py, pycaw) and optional heavy packages (chromadb) that tests skip.
+cerebras-cloud-sdk
+faster-whisper
+fishaudio
+numpy
+ollama
+pygame-ce
+PySide6
+python-dotenv
+PyYAML
+sounddevice
+pytest
