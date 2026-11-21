@@ -4,7 +4,7 @@ ollama                    # Local LLM fallback
 faster-whisper            # Speech-to-text (Whisper)
 
 # ── Voice & Audio ─────────────────────────────────────────────────────────────
-fishaudio                 # Fish Audio TTS
+fish-audio-sdk            # Fish Audio TTS (imports as fishaudio)
 pygame-ce                 # Audio playback (provides the pygame module)
 sounddevice               # Microphone capture
 numpy                     # Audio buffer processing

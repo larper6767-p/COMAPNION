@@ -5,7 +5,7 @@
 # (live2d-py, pycaw) and optional heavy packages (chromadb) that tests skip.
 cerebras-cloud-sdk
 faster-whisper
-fishaudio
+fish-audio-sdk
 numpy
 ollama
 pygame-ce
