@@ -50,6 +50,10 @@ CI runs:
 Hardware-heavy tests should carry the appropriate pytest marker
 (`gui`, `audio`, `live2d`, `network`, `slow`, or `windows`).
 
+Prompt observability and budgets live in `config/prompt_budget.yaml` and
+`core/prompt_budget.py`. They may record counts and section names, never prompt
+text, and must not edit `config/personality.json`.
+
 ## Privacy
 
 Never commit:

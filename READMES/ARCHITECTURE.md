@@ -104,7 +104,7 @@ and to drive the Live2D viewer.
 | Speech output | `core/audio.py` | Fish Audio synthesis, timeout guard, retry, cache, ducking, failure callback |
 | Conversation memory | `core/memory.py`, `core/memory_hygiene.py`, `core/memory_notes.py` | Facts, summaries, durable filtering, self-note harvesting |
 | Vector memory | `memory/vector_store.py` | ChromaDB adapter, stable IDs, startup sync |
-| Prompt layer | `core/aliveness.py`, `core/verbosity.py`, `core/circadian.py`, `core/agenda.py`, `core/threads.py`, `core/interruption.py` | Feature-owned prompt text and behavior rules |
+| Prompt layer | `core/aliveness.py`, `core/verbosity.py`, `core/circadian.py`, `core/agenda.py`, `core/threads.py`, `core/interruption.py`, `core/prompt_budget.py` | Feature-owned prompt text, contextual lines, and prompt-size accounting |
 | Senses | `core/websearch.py`, `vision/screen_capture.py` | Optional web lookup, on-demand in-memory screenshot |
 | Emotion | `emotion/controller.py`, `emotion/mood_delivery.py`, `emotion/sound_script.py`, `emotion/style_detector.py` | Expressions, delivery, sound scripts |
 | Body / animation | `behavior_state.py`, `behavior_director.py`, `live2d_face.py`, `motion3_player.py`, `lipsync.py`, `core/drag_physics.py`, `core/framing.py` | Pure state model, motion budget, Live2D integration, framing |
@@ -137,7 +137,10 @@ A turn moves through these stages:
 1. **Input** - microphone (with VAD/endpointing) or typed text; screen capture
    may be attached to the next turn when armed.
 2. **Prompt assembly** - persona, feature-owned prompt blocks, selected memory
-   facts/summaries/vectors, agenda/circadian/thread context, and web snippets.
+   facts/summaries/vectors, agenda/circadian/thread context, web snippets, and
+   any pending vision image. `VoiceCompanion.build_messages()` is the single
+   assembly point; it records per-section estimates and applies the optional
+   oldest-history budget without changing the in-memory history.
 3. **Generation** - `ModelInterface.stream_chat()` yields chunks.
 4. **Parsing** - mood tags are separated from text; body-control mode parses
    sentence tags and narration; self-written `{{remember: ...}}` notes are
@@ -182,10 +185,14 @@ work. Feature prompt text belongs in feature-owned YAML:
 - `config/circadian.yaml`, `agenda.yaml`, `threads.yaml`, `interruption.yaml` -
   contextual prompt lines.
 - `config/websearch.yaml` - search limits, not prompt voice.
+- `config/prompt_budget.yaml` - size caps and observability knobs only; it
+  contains no prompt text.
 
 Prompt-quality changes are measured before they are kept. The cadence ruler
 (`tools/measure_cadence.py`) reports question rate, narration, one-word beats,
-and self-notes after stripping non-spoken text.
+and self-notes after stripping non-spoken text. The prompt ruler
+(`tools/measure_prompt.py`) reports per-turn size, section totals, trim counts,
+and provider usage from `logs/evelyn.log` without reading prompt text.
 
 ---
 
@@ -212,6 +219,7 @@ Tests in `tests/test_bubble_side.py`, `tests/test_headless.py`, and
 | Five stop sequences configured | `cap_stop_sequences()` trims to four at INFO |
 | Whisper cache miss | Download once, then use local cache |
 | TTS timeout | 30 s cap, one retry, then visible display-only note |
+| Prompt over budget | Oldest outgoing history is trimmed; system/persona text is never cut |
 | Vector store unavailable | Degrade to JSON memory, log once |
 | Live2D runtime missing | Sprite fallback; no crash |
 | Missing optional config | Safe defaults; malformed config logs a warning |

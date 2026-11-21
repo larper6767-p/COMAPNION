@@ -81,6 +81,11 @@ class ModelInterface:
         if self.vision_model:
             logger.info(f"Vision model configured: {self.vision_model}")
         self.total_tokens: Dict[str, int] = {"prompt": 0, "completion": 0}
+        # Phase 1: per-request usage, separate from the legacy cumulative/display
+        # counters above.  The prompt-report finalizer reads this after the
+        # streaming call so estimates can be checked against provider numbers.
+        self.last_usage: Dict[str, int] = {"prompt": 0, "completion": 0}
+        self.last_finish_reason: str = ""
 
         if use_cerebras:
             api_key = os.environ.get("CEREBRAS_API_KEY")
@@ -118,6 +123,10 @@ class ModelInterface:
         message (provider-aware) and ``vision_model`` is used if configured.
         """
         temp = temperature if temperature is not None else self.temperature
+        # Phase 1: reset per-request usage before every call (including the
+        # small classification/summary calls).
+        self.last_usage = {"prompt": 0, "completion": 0}
+        self.last_finish_reason = ""
 
         model = None
         if image_png:
@@ -174,6 +183,14 @@ class ModelInterface:
     def reset_token_stats(self) -> None:
         self.total_tokens = {"prompt": 0, "completion": 0}
 
+    def get_last_usage(self) -> Dict[str, int]:
+        """Return the provider usage for the most recent stream_chat call."""
+        return dict(getattr(self, "last_usage", {}) or {})
+
+    def get_last_finish_reason(self) -> str:
+        """Return the most recent finish reason, or "" when unavailable."""
+        return str(getattr(self, "last_finish_reason", "") or "")
+
     # ── Private ───────────────────────────────────────────────────────────────
 
     def _stream_cerebras(
@@ -197,22 +214,34 @@ class ModelInterface:
             stream = self.cerebras_client.chat.completions.create(**kwargs)
 
             for chunk in stream:
+                # Capture usage even on a final chunk that carries no choices;
+                # do it BEFORE yielding so an interrupted consumer cannot skip
+                # the counters.
+                usage = getattr(chunk, "usage", None)
+                if usage:
+                    if getattr(usage, "prompt_tokens", None) is not None:
+                        prompt_tokens = int(usage.prompt_tokens or 0)
+                        self.total_tokens["prompt"] = prompt_tokens
+                        self.last_usage["prompt"] = prompt_tokens
+                    if getattr(usage, "completion_tokens", None) is not None:
+                        completion_tokens = int(usage.completion_tokens or 0)
+                        self.total_tokens["completion"] = completion_tokens
+                        self.last_usage["completion"] = completion_tokens
+
                 if not chunk.choices:
                     continue
-                delta = chunk.choices[0].delta
+                choice = chunk.choices[0]
+                finish_reason = getattr(choice, "finish_reason", None)
+                if finish_reason:
+                    self.last_finish_reason = str(finish_reason)
+                delta = choice.delta
                 # reasoning chunks arrive in delta.reasoning — skip them silently.
                 # actual response text arrives in delta.content once thinking is done.
                 content = (delta.content or "") if hasattr(delta, "content") else ""
-                done = chunk.choices[0].finish_reason is not None
+                done = finish_reason is not None
                 if not content and not done:
                     continue  # pure reasoning token, nothing to yield yet
                 yield {"message": {"content": content}, "done": done}
-
-                if hasattr(chunk, "usage") and chunk.usage:
-                    if hasattr(chunk.usage, "prompt_tokens"):
-                        self.total_tokens["prompt"] = chunk.usage.prompt_tokens
-                    if hasattr(chunk.usage, "completion_tokens"):
-                        self.total_tokens["completion"] = chunk.usage.completion_tokens
 
         except Exception as e:
             logger.error(f"Cerebras streaming failed: {e}")
@@ -237,11 +266,20 @@ class ModelInterface:
                 stream=True,
                 options=opts,
             ):
-                yield chunk
+                # Capture counters before yielding so interrupted consumers
+                # still leave the per-request usage readable.
                 if "prompt_eval_count" in chunk:
-                    self.total_tokens["prompt"] += chunk["prompt_eval_count"]
+                    prompt_tokens = int(chunk["prompt_eval_count"] or 0)
+                    self.total_tokens["prompt"] += prompt_tokens
+                    self.last_usage["prompt"] = prompt_tokens
                 if "eval_count" in chunk:
-                    self.total_tokens["completion"] += chunk["eval_count"]
+                    completion_tokens = int(chunk["eval_count"] or 0)
+                    self.total_tokens["completion"] += completion_tokens
+                    self.last_usage["completion"] = completion_tokens
+                done_reason = chunk.get("done_reason")
+                if done_reason:
+                    self.last_finish_reason = str(done_reason)
+                yield chunk
 
         except Exception as e:
             logger.error(f"Ollama streaming failed: {e}")
