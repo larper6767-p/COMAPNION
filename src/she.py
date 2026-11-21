@@ -36,13 +36,14 @@ import datetime
 import subprocess
 import webbrowser
 import threading
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from faster_whisper import WhisperModel
 from fishaudio import FishAudio
 
 from core.audio import Speaker
 from core.config import Config
+from core import prompt_budget
 from core.memory import MemoryManager
 from core.model import ModelInterface, parse_mood_tag, split_sentences, next_fallback
 from core.recording import record_until_silence, WakeWordDetector
@@ -61,6 +62,11 @@ class VoiceCompanion:
         self.max_record_seconds = 20.0
         # Feature 24: sticky long mode for the session (toggled via /long).
         self._long_mode = False
+        # Phase 1: per-turn prompt report and the section spans recorded while
+        # system_message() is assembled.  Neither contains copied prompt text;
+        # sections hold references only for the duration of one turn.
+        self.last_prompt_report: Optional[prompt_budget.PromptReport] = None
+        self._prompt_sections: List[Tuple[str, str]] = []
 
         # ── Memory ────────────────────────────────────────────────────────────
         self.memory = MemoryManager(
@@ -479,9 +485,29 @@ class VoiceCompanion:
 
     # ── System message ────────────────────────────────────────────────────────
 
+    def _reset_prompt_sections(self) -> None:
+        """Start a fresh section trace for one system-prompt assembly."""
+        self._prompt_sections = []
+
+    def _add_prompt_section(self, name: str, text: str) -> None:
+        """Record one appended prompt span for size accounting only.
+
+        The section list is per-turn state; it holds the same string references
+        that were appended, never a separate copy of prompt text.
+        """
+        if not text:
+            return
+        sections = getattr(self, "_prompt_sections", None)
+        if sections is None:
+            sections = []
+            self._prompt_sections = sections
+        sections.append((str(name), text))
+
     def system_message(self, query: Optional[str] = None) -> Dict[str, str]:
+        self._reset_prompt_sections()
         raw = self.config.persona["system_prompt"]
         text = "\n\n".join(raw) if isinstance(raw, list) else raw
+        self._add_prompt_section("persona", text)
 
         # Feature 24: long mode — on a long turn the override paragraph is
         # appended LAST (so it beats the earlier length rules) and the usual
@@ -499,37 +525,50 @@ class VoiceCompanion:
             long_turn = False
         if long_turn:
             try:
-                text += "\n\n" + _vb.long_suffix(verb_cfg)
+                suffix = "\n\n" + _vb.long_suffix(verb_cfg)
+                text += suffix
+                self._add_prompt_section("verbosity_long", suffix)
             except Exception:
                 pass
         else:
-            text += f" Keep replies under {self.config.persona['max_reply_length']} characters."
+            cap = f" Keep replies under {self.config.persona['max_reply_length']} characters."
+            text += cap
+            self._add_prompt_section("verbosity_cap", cap)
 
         if self.config.persona.get("mood_tags"):
             moods = ", ".join(self.config.persona.get("moods", []))
-            text += (
-                f" Begin every reply with one mood in square brackets, chosen from: {moods}."
+            mood_line = (
+                f" Begin every reply with one mood in square brackets, chosen "
+                f"from: {moods}."
             )
+            text += mood_line
+            self._add_prompt_section("mood_tags", mood_line)
 
         reminder = self.config.persona.get("reminder", "")
         if reminder:
-            text += f"\n\n{reminder}"
+            block = f"\n\n{reminder}"
+            text += block
+            self._add_prompt_section("reminder", block)
 
         # Follow-up context: remind her of the last thing that was said so she
         # can reference continuity without needing the full rolling history.
         if self.last_exchange:
             user_last, assist_last = self.last_exchange
-            text += (
+            block = (
                 f"\n\nLast exchange before this turn\n"
                 f"User said: {user_last}\nYou said: {assist_last}"
             )
+            text += block
+            self._add_prompt_section("last_exchange", block)
 
         # Memory context block (facts + closeness hint + episode summaries,
         # plus semantically relevant memories when the vector store is on).
         ctx = self.memory.build_context_block(
             max_facts=self.config.max_memory_facts, query=query)
         if ctx:
-            text += f"\n\n{ctx}"
+            block = f"\n\n{ctx}"
+            text += block
+            self._add_prompt_section("memory", block)
 
         # Feature 6: calibrate to the user's emotional tone.
         # Config: config/emotion_styles.json (enabled: false turns it off).
@@ -542,7 +581,9 @@ class VoiceCompanion:
                 matches = detect_styles(query)
                 scene = build_scene_block(query, matches=matches)
                 if scene:
-                    text += f"\n\n{scene}"
+                    block = f"\n\n{scene}"
+                    text += block
+                    self._add_prompt_section("scene", block)
             except Exception as e:
                 logger.warning("[style] scene mood unavailable: %s", e)
 
@@ -558,7 +599,9 @@ class VoiceCompanion:
                     boundary = any(m.category == "Boundary" for m in matches)
                     note = update_state(state, query, boundary, cfg_s)
                     if note:
-                        text += f"\n\n{note}"
+                        block = f"\n\n{note}"
+                        text += block
+                        self._add_prompt_section("sound_script", block)
             except Exception as e:
                 logger.warning("[sound] sound script unavailable: %s", e)
 
@@ -569,11 +612,90 @@ class VoiceCompanion:
             from core import aliveness as _alive
             alive_block = _alive.prompt_block()
             if alive_block:
-                text += f"\n\n{alive_block}"
+                block = f"\n\n{alive_block}"
+                text += block
+                self._add_prompt_section("aliveness", block)
         except Exception as e:
             logger.debug("[aliveness] prompt layer unavailable: %s", e)
 
         return {"role": "system", "content": text}
+
+    # ── Prompt assembly + observability (Phase 1) ─────────────────────────────
+
+    def _prompt_budget_config(self) -> Dict[str, Any]:
+        """Load this config directory's prompt-budget knobs (hot-reloadable)."""
+        path = getattr(self.config, "prompt_budget_file", None)
+        if path is None:
+            config_dir = getattr(self.config, "config_dir", None)
+            path = (Path(config_dir) / "prompt_budget.yaml"
+                    if config_dir else prompt_budget.CONFIG_PATH)
+        try:
+            return prompt_budget.load_config(path)
+        except Exception as e:
+            logger.debug("Prompt budget config unavailable: %s", e)
+            return dict(prompt_budget.DEFAULTS)
+
+    def build_messages(
+        self,
+        query: Optional[str] = None,
+        web_block: Optional[str] = None,
+        has_image: bool = False,
+    ) -> List[Dict[str, str]]:
+        """Build the real outgoing message list and record its size.
+
+        This is the single assembly point for CLI and GUI turns.  The system
+        prompt is unchanged; optional web context is appended exactly where it
+        used to be; history is the newest ``max_history`` messages, then the
+        oldest are trimmed only when the configured hard budget requires it.
+        """
+        system = self.system_message(query=query)
+        if web_block:
+            block = "\n\n" + web_block
+            system["content"] += block
+            self._add_prompt_section("web", block)
+
+        cfg = self._prompt_budget_config()
+        sections = list(getattr(self, "_prompt_sections", []) or [])
+        try:
+            max_history = int(getattr(self.config, "max_history", 30) or 30)
+        except (TypeError, ValueError):
+            max_history = 30
+        selected, report = prompt_budget.plan_prompt(
+            system["content"],
+            getattr(self, "history", []) or [],
+            max_history=max_history,
+            cfg=cfg,
+            use_cerebras=bool(getattr(self.config, "use_cerebras", True)),
+            sections=sections,
+            has_image=has_image,
+        )
+        self.last_prompt_report = report
+        self._prompt_report_finalized = False
+        prompt_budget.log_plan(report, cfg, logger)
+        return [system] + selected
+
+    def _finalize_prompt_report(self) -> None:
+        """Attach the provider's real usage to the last prompt report once."""
+        report = getattr(self, "last_prompt_report", None)
+        if report is None or getattr(self, "_prompt_report_finalized", False):
+            return
+        self._prompt_report_finalized = True
+        try:
+            usage = self.model.get_last_usage()
+        except Exception:
+            usage = getattr(self.model, "last_usage", {}) or {}
+        try:
+            prompt_tokens = int(usage.get("prompt", 0) or 0)
+            completion_tokens = int(usage.get("completion", 0) or 0)
+        except (TypeError, ValueError):
+            prompt_tokens = completion_tokens = 0
+        try:
+            finish = self.model.get_last_finish_reason()
+        except Exception:
+            finish = str(getattr(self.model, "last_finish_reason", "") or "")
+        report = report.with_usage(prompt_tokens, completion_tokens, finish)
+        self.last_prompt_report = report
+        prompt_budget.log_usage(report, self._prompt_budget_config(), logger)
 
     # ── History management with summarization ─────────────────────────────────
 
@@ -761,10 +883,11 @@ class VoiceCompanion:
 
         self.history.append({"role": "user", "content": text})
         self._maybe_summarize()
-        messages = [self.system_message(query=text)] + self.history[-self.config.max_history:]
+        messages = self.build_messages(query=text)
 
         try:
             reply_text, mood = self.stream_reply(messages)
+            self._finalize_prompt_report()
             self.history.append({"role": "assistant", "content": reply_text})
             self._trim_history()
             self.memory.log_turn("user", text)
@@ -777,6 +900,7 @@ class VoiceCompanion:
                 logger.debug(f"[self-notes] harvest skipped: {e}")
             self._extract_facts(text, reply_text)
         except Exception as e:
+            self._finalize_prompt_report()
             logger.error(f"Turn failed: {e}")
             self.history.pop()
 
@@ -1001,6 +1125,12 @@ class VoiceCompanion:
         print(f"   Tokens: {tokens['prompt']} prompt  {tokens['completion']} completion")
         backend = "Cerebras" if self.config.use_cerebras else "Ollama"
         print(f"   Backend: {backend} / {self.model.model_name}")
+        report = getattr(self, "last_prompt_report", None)
+        if report is not None:
+            for line in report.summary_lines():
+                print(f"   {line}")
+        else:
+            print("   Prompt: no turn measured yet")
         if self.speaker.cache:
             print(f"   TTS cache: {len(self.speaker.cache.cache)}/{self.speaker.cache.max_size}")
 

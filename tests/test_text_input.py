@@ -164,6 +164,11 @@ def _responder(*, command=None):
     obj._trim_history = lambda: None
     obj._extract_facts = lambda a, b: None
     obj.system_message = lambda query=None: {"role": "system", "content": "s"}
+    obj.build_messages = lambda query=None, web_block=None, has_image=False: (
+        [obj.system_message(query=query)]
+        + obj.history[-obj.config.max_history:]
+    )
+    obj._finalize_prompt_report = lambda: None
     obj.stream_reply = lambda messages, image_png=None: STREAM_RESULT
     return obj
 

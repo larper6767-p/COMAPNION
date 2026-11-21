@@ -202,5 +202,8 @@ def test_she_asks_the_web_question_per_turn():
 def test_app_injects_web_block_into_system_message():
     src = "".join(_APP.read_text(encoding="utf-8").split())
     assert "web_block=self._web_context(text)" in src
-    assert 'ifweb_block:' in src
-    assert 'messages[0]["content"]+="\\n\\n"+web_block' in src
+    assert "messages=self.build_messages(" in src
+    assert "web_block=web_block" in src
+    # the assembly point records the web section for prompt observability
+    she_src = "".join(_SHE.read_text(encoding="utf-8").split())
+    assert 'self._add_prompt_section("web",block)' in she_src

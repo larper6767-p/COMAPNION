@@ -490,14 +490,19 @@ class PetCompanion(VoiceCompanion):
         # BODY section is only injected when the Live2D renderer is actually
         # enabled (so a sprite/user, or a headless run, never gets it).
         if _FACE_RENDERER == "live2d" and _LIVE2D_AVAILABLE and _BODY_CONTROL:
-            msg["content"] += build_body_prompt(body_actions())
+            block = build_body_prompt(body_actions())
+            if block:
+                msg["content"] += block
+                self._add_prompt_section("body", block)
         # Feature 16: the clock + what the hour means to her (empty when off).
         if _circadian_prompt_line is not None:
             try:
                 line = _circadian_prompt_line(datetime.datetime.now(),
                                               _circadian_cfg())
                 if line:
-                    msg["content"] += "\n\n" + line
+                    block = "\n\n" + line
+                    msg["content"] += block
+                    self._add_prompt_section("circadian", block)
             except Exception:
                 pass
         # Feature 17: her agenda — what she is (or isn't) in the middle of.
@@ -506,13 +511,17 @@ class PetCompanion(VoiceCompanion):
                 line = _agenda_prompt_line(datetime.datetime.now(),
                                            _agenda_cfg())
                 if line:
-                    msg["content"] += "\n\n" + line
+                    block = "\n\n" + line
+                    msg["content"] += block
+                    self._add_prompt_section("agenda", block)
             except Exception:
                 pass
         # Phase 3b: the state line goes at the VERY END of the system message.
         line = self._state_line()
         if line is not None:
-            msg["content"] += "\n\n" + line
+            block = "\n\n" + line
+            msg["content"] += block
+            self._add_prompt_section("state", block)
             if _BODY_LOG:
                 logger.info("[body] state -> prompt: %s", line)
         # Feature 27: the one-turn question guard outranks everything above it.
@@ -523,7 +532,9 @@ class PetCompanion(VoiceCompanion):
             last_reply = self.last_exchange[1] if self.last_exchange else ""
             guard = _alive.guard_block(last_reply)
             if guard:
-                msg["content"] += "\n\n" + guard
+                block = "\n\n" + guard
+                msg["content"] += block
+                self._add_prompt_section("question_guard", block)
         except Exception:
             pass
         return msg
@@ -614,14 +625,18 @@ class PetCompanion(VoiceCompanion):
             logger.debug(f"[websearch] skip: {e}")
             web_block = None
 
-        messages = [self.system_message(query=text)] + self.history[-self.config.max_history:]
-        if web_block:
-            messages[0]["content"] += "\n\n" + web_block
+        messages = self.build_messages(
+            query=text,
+            web_block=web_block,
+            has_image=image_png is not None,
+        )
 
         try:
             reply_text, mood = self.stream_reply(messages, image_png=image_png)
+            self._finalize_prompt_report()
         except Exception:
             # stream_reply already emitted and spoke the fallback; just clean up
+            self._finalize_prompt_report()
             self.history.pop()
             return
 
@@ -3014,6 +3029,12 @@ class Pet(QWidget):
             f"Tokens: {tokens['prompt']} prompt / {tokens['completion']} completion",
             f"Backend: {'Cerebras' if c.config.use_cerebras else 'Ollama'} / {c.model.model_name}",
         ]
+        report = getattr(c, "last_prompt_report", None)
+        if report is not None:
+            lines.append("")
+            lines.extend(report.summary_lines())
+        else:
+            lines.append("Prompt: no turn measured yet")
         # Phase 4b: body-control statistics summary.
         if _BODY_CONTROL and _FACE_RENDERER == "live2d":
             s = _BODY_STATS.summary()

@@ -1,0 +1,28 @@
+# ─ Prompt budget and observability ────────────────────────────────────────────
+# This file contains NO persona text. It only controls how prompt size is
+# measured and how much rolling history is sent to the model.
+#
+# While enabled, every conversation turn logs one privacy-safe `[prompt]` line
+# with character/token estimates and per-section sizes. Prompt text is never
+# logged. After the reply, a second `[prompt] usage` line records the provider's
+# real prompt/completion counts when the provider returns them.
+enabled: true
+
+# Hard cap for the estimated prompt (system + rolling history). 0 = observe
+# only, never trim. When the cap is exceeded, the OLDEST messages in the
+# outgoing copy are dropped first. Persona/system text is never truncated, and
+# the full in-memory history is left untouched for summarisation and logging.
+max_prompt_tokens: 12000
+
+# Ollama is pinned to a 2048-token context in core/model.py, so the cloud cap
+# above is unsafe there. This lower cap leaves room for the reply.
+ollama_max_prompt_tokens: 1600
+
+# Log at WARNING when the estimate reaches this fraction of the active cap.
+warn_ratio: 0.85
+
+# Never trim below this many of the newest history messages.
+min_history_messages: 2
+
+# false = only log when trimming, near the cap, or over budget.
+log_every_turn: true

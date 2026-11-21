@@ -239,6 +239,7 @@ class Config:
         self.memory_file = self.config_dir / "memory.json"
         self.episode_dir = self.config_dir / "episodes"
         self.aliveness_file = self.config_dir / "aliveness.yaml"
+        self.prompt_budget_file = self.config_dir / "prompt_budget.yaml"
         self.log_dir = PROJECT_ROOT / "logs"
 
         # Set up logging first so everything below is logged

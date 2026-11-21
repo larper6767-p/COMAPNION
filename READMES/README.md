@@ -76,6 +76,9 @@ no key.
 - **Aliveness** - feature-owned prompt blocks for turn shape, listening,
   narration, opinions, and self-written memory notes. Prompt changes are measured
   with `tools/measure_cadence.py` before they are kept.
+- **Prompt budget** - per-turn size estimates by section, optional rolling
+  history cap, provider usage reporting, `/stats`, and
+  `tools/measure_prompt.py`; see [PROMPT_BUDGET.md](PROMPT_BUDGET.md).
 - **Desktop pet** - Live2D renderer with sprite fallback, mood crossfades, idle
   movement, gaze, drag physics, touch reactions, speech bubble, tray menu, and
   proactive idle messages.
@@ -168,6 +171,7 @@ Feature behavior lives in separate, feature-owned files:
 | `config/interruption.yaml` | Interruption recovery |
 | `config/websearch.yaml` | Web search limits and cache |
 | `config/verbosity.yaml` | Reply length policy |
+| `config/prompt_budget.yaml` | Prompt size accounting and optional history budget |
 
 Runtime state is auto-managed in `config/memory.json`,
 `config/relationship.json`, `config/pet_state.json`, `config/episodes/`, and
@@ -227,6 +231,7 @@ than deleting them.
 | `tools/backup_data.py` | Create or restore a portable data backup |
 | `tools/memory_doctor.py` | Read-only JSON/vector drift report |
 | `tools/measure_cadence.py` | Question/beat/note metrics from episodes |
+| `tools/measure_prompt.py` | Prompt-size and provider-usage summary from logs |
 | `tools/live2d_preview.py` | Tune framing, liveliness, and body behavior |
 | `tools/diagnose_live2d.py` | Live2D/system diagnostics (`diagnose.bat`) |
 | `tools/gen_sfx.py` | Generate SFX clips in her voice |
@@ -281,5 +286,7 @@ checklist for anything that needs a real window, microphone, or speakers.
 - [ARCHITECTURE.md](ARCHITECTURE.md) - current runtime/module/data-flow map.
 - [BEHAVIOR_DIRECTOR.md](BEHAVIOR_DIRECTOR.md) - behavior state, motion budget,
   gaze, and Live2D integration.
+- [PROMPT_BUDGET.md](PROMPT_BUDGET.md) - prompt-size observability, budgets,
+  logs, and `/stats`.
 - [CHANGELOG.md](CHANGELOG.md) - the historical feature-by-feature build log.
 - [README_FIRST.md](README_FIRST.md) - shortest friend-test setup path.
