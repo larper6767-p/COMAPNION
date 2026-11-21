@@ -214,14 +214,18 @@ def test_shutdown_writes_a_fresh_session_summary():
 # ── canon guards (Marin cleanup must stay cleaned) ────────────────────────────
 
 def test_retired_marin_summaries_are_gone():
-    text = (ROOT / "config" / "episodes" / "summaries.json").read_text(
-        encoding="utf-8")
+    path = ROOT / "config" / "episodes" / "summaries.json"
+    if not path.exists():
+        pytest.skip("live episode summaries are not present in this checkout")
+    text = path.read_text(encoding="utf-8")
     assert "Marin" not in text
 
 
 def test_live_memory_has_no_marin_fact_junk():
-    facts = json.loads((ROOT / "config" / "memory.json").read_text(
-        encoding="utf-8"))
+    path = ROOT / "config" / "memory.json"
+    if not path.exists():
+        pytest.skip("live memory is not present in this checkout")
+    facts = json.loads(path.read_text(encoding="utf-8"))
     joined = " ".join(facts).lower()
     for bad in ("marin", "the assistant", "sexy cosplays",
                 "search the internet", "i have chicken", "almost 2",

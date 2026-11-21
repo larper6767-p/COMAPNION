@@ -4,10 +4,16 @@ import time
 import logging
 import threading
 from collections import deque
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
-import sounddevice as sd
+
+try:
+    import sounddevice as sd
+    _SOUNDDEVICE_ERROR: Optional[BaseException] = None
+except Exception as exc:  # headless CI / no PortAudio host
+    sd = None  # type: ignore[assignment]
+    _SOUNDDEVICE_ERROR = exc
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +24,7 @@ def rms(block: np.ndarray) -> float:
     return float(np.sqrt(np.mean(np.square(block))))
 
 
-def calibrate_noise(stream: sd.InputStream, block: int, samples: int = 15) -> float:
+def calibrate_noise(stream: Any, block: int, samples: int = 15) -> float:
     """Measure ambient noise floor and return a safe threshold."""
     readings = [rms(stream.read(block)[0]) for _ in range(samples)]
     noise = float(np.mean(readings))
@@ -97,6 +103,10 @@ def record_until_silence(
     Returns:
         Float32 audio array, or None if nothing captured.
     """
+    if sd is None:
+        logger.error("Microphone unavailable: %s", _SOUNDDEVICE_ERROR)
+        return None
+
     block = int(sample_rate * 0.03)       # 30 ms per block
     needed_silence = int(silence_seconds / 0.03)
     recheck_blocks = max(1, int(round(0.6 / 0.03)))
@@ -283,6 +293,9 @@ class InterruptMonitor:
 
     def _run(self) -> None:
         block = int(self.sample_rate * 0.03)
+        if sd is None:
+            logger.debug("Interrupt monitor disabled: %s", _SOUNDDEVICE_ERROR)
+            return
         try:
             with sd.InputStream(
                 samplerate=self.sample_rate,
@@ -378,6 +391,12 @@ class WakeWordDetector:
     def _whisper_loop(self) -> None:
         """Poll with short recordings, check transcript for the whole phrase."""
         logger.debug(f"Wake-word phrase: {self.wake_word!r}")
+        if sd is None:
+            logger.error(
+                "Wake word disabled: microphone unavailable (%s)",
+                _SOUNDDEVICE_ERROR,
+            )
+            return
 
         while True:
             # Record a short burst (up to 2.5 s) looking for any speech energy
@@ -401,6 +420,8 @@ class WakeWordDetector:
 
 def _record_short(sample_rate: int, max_seconds: float = 2.5) -> Optional[np.ndarray]:
     """Record a short clip only if voice energy is present."""
+    if sd is None:
+        return None
     block = int(sample_rate * 0.03)
     chunks = []
     try:
