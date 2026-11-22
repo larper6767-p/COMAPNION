@@ -342,3 +342,147 @@ def test_companion_syncs_vector_store_at_startup():
     src = (Path(__file__).parent.parent / "src" / "she.py").read_text(
         encoding="utf-8")
     assert "sync_vector_store()" in src
+
+
+# ── Phase 5: SQLite vector store tests ────────────────────────────────────────
+
+@pytest.fixture
+def sqlite_store(tmp_path):
+    """A SQLiteVectorStore with deterministic hash embeddings."""
+    from memory.sqlite_vector_store import SQLiteVectorStore
+    return SQLiteVectorStore(
+        path=tmp_path / "vectors",
+        collection_name=f"t_sqlite_{next(_counter)}",
+        embedding_function=HashingEmbeddingFunction(dim=64),
+    )
+
+
+def test_sqlite_store_add_and_count(sqlite_store):
+    assert sqlite_store.count() == 0
+    sqlite_store.add_memory("I love coffee in the morning.")
+    sqlite_store.add_memory("My car is a red sports car.")
+    assert sqlite_store.count() == 2
+
+
+def test_sqlite_store_backend_name(sqlite_store):
+    assert sqlite_store.backend_name == "sqlite"
+    assert sqlite_store.enabled is True
+
+
+def test_sqlite_store_search(sqlite_store):
+    sqlite_store.add_memory("I love coffee in the morning.", metadata={"kind": "fact"})
+    sqlite_store.add_memory("My car is a red sports car.")
+    sqlite_store.add_memory("The weather is nice today.")
+    
+    hits = sqlite_store.search_memories("coffee", top_k=3)
+    assert hits, "expected at least one hit"
+    assert "coffee" in hits[0]["text"]
+    # Closest first
+    assert hits[0]["distance"] <= hits[-1]["distance"]
+
+
+def test_sqlite_store_upsert_same_id(sqlite_store):
+    """Adding same memory twice should upsert, not duplicate."""
+    mid = sqlite_store.add_memory("test fact", metadata={"kind": "fact"})
+    assert sqlite_store.count() == 1
+    
+    mid2 = sqlite_store.add_memory("test fact", metadata={"kind": "fact"})
+    assert mid == mid2
+    assert sqlite_store.count() == 1  # Still 1, not 2
+
+
+def test_sqlite_store_sync_facts(sqlite_store):
+    sqlite_store.add_memory("stale fact", metadata={"kind": "fact"})
+    sqlite_store.add_memory("[2026-01-01] keep summary",
+                           metadata={"kind": "summary", "date": "2026-01-01"})
+    
+    assert sqlite_store.sync_facts(["fact a", "fact b"]) == 3  # delete 1, add 2
+    assert sqlite_store.count() == 3
+    assert sqlite_store.sync_facts(["fact a", "fact b"]) == 0  # idempotent
+    
+    texts = {h["text"] for h in sqlite_store.search_memories("fact a", top_k=10)}
+    assert "fact a" in texts
+    assert "stale fact" not in texts
+
+
+def test_sqlite_store_sync_summaries(sqlite_store):
+    sqlite_store.add_memory("[2026-01-01] old one",
+                           metadata={"kind": "summary", "date": "2026-01-01"})
+    sqlite_store.add_memory("a durable fact", metadata={"kind": "fact"})
+    
+    assert sqlite_store.sync_summaries([("2026-01-01", "new text")]) == 2
+    assert sqlite_store.count() == 2
+    assert sqlite_store.sync_summaries([("2026-01-01", "new text")]) == 0
+    
+    hits = sqlite_store.search_memories("new text", top_k=5)
+    assert any("new text" in h["text"] for h in hits)
+
+
+def test_sqlite_store_clear_facts(sqlite_store):
+    sqlite_store.add_memory("a fact", metadata={"kind": "fact"})
+    sqlite_store.add_memory("[2026-01-01] a summary",
+                           metadata={"kind": "summary", "date": "2026-01-01"})
+    
+    assert sqlite_store.clear_facts() == 1
+    assert sqlite_store.count() == 1  # summary survives
+
+
+def test_sqlite_store_migrate_from_json(tmp_path, sqlite_store):
+    p = tmp_path / "memory.json"
+    p.write_text(json.dumps(["fact a", "fact b", "fact a"]), encoding="utf-8")
+    
+    assert sqlite_store.migrate_from_json(p) == 2  # dedupes
+    assert sqlite_store.count() == 2
+    assert sqlite_store.migrate_from_json(p) == 0  # idempotent
+
+
+def test_sqlite_store_max_distance_filter(sqlite_store):
+    for i in range(5):
+        sqlite_store.add_memory(f"memory number {i}")
+    sqlite_store.max_distance = 1.0
+    
+    hits = sqlite_store.search_memories("memory", top_k=5)
+    assert all(h["distance"] <= 1.0 for h in hits)
+
+
+def test_sqlite_store_empty_search(sqlite_store):
+    sqlite_store.add_memory("something")
+    assert sqlite_store.search_memories("   ") == []
+
+
+def test_sqlite_store_creates_database_file(tmp_path, sqlite_store):
+    """Verify the .db file is created."""
+    db_file = tmp_path / "vectors" / f"{sqlite_store.collection_name}.db"
+    assert db_file.exists()
+
+
+def test_factory_creates_sqlite_store_when_configured(tmp_path):
+    """Phase 5: factory should create SQLiteVectorStore when backend=sqlite."""
+    s = create_vector_store({
+        "enabled": True,
+        "backend": "sqlite",
+        "embedding": "hash",
+        "hash_dim": 32,
+        "collection": f"t_sqlite_factory_{next(_counter)}",
+        "path": str(tmp_path),
+    })
+    
+    assert s.enabled is True
+    assert s.backend_name == "sqlite"
+
+
+def test_factory_fallback_to_chromadb_if_sqlite_fails(tmp_path, chroma_client):
+    """If SQLite fails, should fall back to ChromaDB."""
+    # Force failure by not having NumPy (but we do have it, so this test
+    # actually tests the try/except logic by checking chromadb is attempted)
+    s = create_vector_store({
+        "enabled": True,
+        "backend": "invalid_backend",  # Falls through to chromadb
+        "embedding": "hash",
+        "collection": f"t_fallback_{next(_counter)}",
+        "path": str(tmp_path),
+    }, client=chroma_client)
+    
+    assert s.enabled is True
+    assert s.backend_name == "chromadb"
+

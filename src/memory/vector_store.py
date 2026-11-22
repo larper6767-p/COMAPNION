@@ -457,6 +457,8 @@ def create_vector_store(
 
     ``client``/``embedding_function`` are injection points for tests (e.g. a
     chromadb ``EphemeralClient`` + :class:`HashingEmbeddingFunction`).
+    
+    Phase 5: When backend="sqlite", returns SQLiteVectorStore instead of ChromaDB.
     """
     cfg = load_config()
     cfg.update(settings or {})
@@ -464,6 +466,33 @@ def create_vector_store(
     # A real client implies an explicit request (tests); otherwise honour `enabled`.
     if client is None and not cfg.get("enabled"):
         return NullVectorStore()
+    
+    # Phase 5: SQLite backend option
+    backend = str(cfg.get("backend", "chromadb")).lower()
+    if backend == "sqlite" and client is None:  # tests with client still use chromadb
+        try:
+            from memory.sqlite_vector_store import SQLiteVectorStore
+            
+            # Build embedder if not provided
+            if embedding_function is None:
+                emb_type = str(cfg.get("embedding", "hash")).lower()
+                if emb_type == "hash":
+                    embedding_function = HashingEmbeddingFunction(
+                        dim=int(cfg.get("hash_dim", 256))
+                    )
+                else:
+                    embedding_function = _default_embedder()
+            
+            return SQLiteVectorStore(
+                path=path or _resolve_path(cfg.get("path") or DEFAULT_CONFIG["path"]),
+                collection_name=collection or str(cfg.get("collection")),
+                embedding_function=embedding_function,
+                top_k=int(cfg.get("top_k", 4)),
+                max_distance=cfg.get("max_distance"),
+            )
+        except Exception as e:
+            logger.warning("SQLite vector store unavailable (%s) — falling back to ChromaDB", e)
+            # Fall through to chromadb
 
     try:
         return VectorStore(
