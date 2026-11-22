@@ -1547,6 +1547,13 @@ class Pet(QWidget):
             self.clearMask()
             return
         s = int(getattr(self, "face_size", 0) or 0)
+        
+        # Safety: if face_size is 0 or too small, clear the mask entirely.
+        # This prevents the model from becoming invisible when calculations fail.
+        if s < 50:
+            self.clearMask()
+            return
+        
         wc = int(s * 1.2)
         fpx = (wc - s) // 2
         left = self._compact_left()
