@@ -1016,10 +1016,12 @@ class VoiceCompanion:
             return None
 
     def _extract_facts(self, user_text: str, reply_text: str) -> None:
-        """Ask the model to pull durable facts about the user out of a turn.
+        """Phase 4A: Extract durable facts using structured JSON and validation.
 
-        Runs every few turns (not each turn) to limit token/API cost. Facts are
-        deduped against existing memory and persisted via config.save_memory.
+        Runs every few turns (not each turn) to limit token/API cost. Uses the
+        Phase 4 hybrid extraction pipeline with structured outputs, semantic
+        deduplication (when vector store is available), and durability
+        classification.
         """
         if not self.config.auto_extract_facts:
             return
@@ -1029,36 +1031,49 @@ class VoiceCompanion:
         self._turns_since_fact_scan = 0
 
         try:
-            prompt = (
-                "Extract durable facts the USER explicitly stated about "
-                "themselves in this exchange. Write each fact as a standalone "
-                "third-person sentence starting with 'The user'. Keep only "
-                "preferences, routines, people, dates, places, and ongoing "
-                "projects. Exclude greetings, questions, plans for today, "
-                "temporary feelings, anything the assistant said, instructions "
-                "about tools/internet/roleplay, and anything you inferred. "
-                "Output ONLY a JSON list of strings, or [] if there are none.\n\n"
-                f"User: {user_text}\nYou: {reply_text}"
+            from core.fact_extraction import (
+                build_extraction_prompt,
+                extract_and_validate,
             )
+            
+            # Phase 4A: structured prompt requesting JSON schema
+            prompt = build_extraction_prompt(user_text, reply_text, structured=True)
+            
+            # Stream model response
             full = ""
             for chunk in self.model.stream_chat(
                 [{"role": "user", "content": prompt}], temperature=0.1
             ):
                 full += chunk["message"]["content"]
-
-            from core.memory_hygiene import clean_fact, parse_facts
-            known = [clean_fact(f) for f in self.memory.get_facts()]
-            known_keys = {f.casefold() for f in known if f}
-            added = 0
-            for fact in parse_facts(full):
-                if fact.casefold() in known_keys:
-                    continue
-                self.memory.add_fact(fact)
-                known_keys.add(fact.casefold())
-                added += 1
-            if added:
+            
+            # Phase 4A: validate extraction with semantic dedupe and classification
+            result = extract_and_validate(
+                full,
+                existing_facts=self.memory.get_facts(),
+                vector_store=getattr(self, "vector_store", None),
+                enable_semantic_dedupe=True,
+            )
+            
+            # Log extraction results
+            if result.success:
+                logger.info(
+                    f"[fact-extraction] {len(result.facts)} fact(s) via {result.method} "
+                    f"({len(result.rejected)} rejected, {result.total_candidates} total)"
+                )
+                for fact, reason in result.rejected:
+                    logger.debug(f"[fact-extraction] rejected: {fact!r} ({reason})")
+                
+                # Add accepted facts to memory
+                for fact in result.facts:
+                    self.memory.add_fact(fact)
+                
                 self.config.save_memory(self.memory.get_facts())
-                logger.info(f"Auto-extracted {added} new fact(s)")
+                logger.info(f"Auto-extracted {len(result.facts)} new fact(s)")
+            else:
+                logger.debug(
+                    f"[fact-extraction] no facts extracted "
+                    f"(method={result.method}, candidates={result.total_candidates})"
+                )
         except Exception as e:
             logger.debug(f"Fact extraction skipped: {e}")
 

@@ -119,8 +119,14 @@ def test_parse_facts_treats_input_lines_separately():
 
 # ── wiring tripwires ──────────────────────────────────────────────────────────
 
-def test_she_extract_facts_uses_the_hygiene_filter():
+def test_she_extract_facts_uses_phase_4_hybrid_extraction():
+    """Phase 4A: verify she.py uses the new fact_extraction module."""
     src = (ROOT / "src" / "she.py").read_text(encoding="utf-8")
-    assert "from core.memory_hygiene import clean_fact, parse_facts" in src
-    # the old free-form line parser must be gone
-    assert "full.splitlines()" not in src
+    # Phase 4A: should use the new hybrid extraction
+    assert "from core.fact_extraction import" in src
+    assert "build_extraction_prompt" in src
+    assert "extract_and_validate" in src
+    # The old imports should be gone
+    assert "from core.memory_hygiene import clean_fact, parse_facts" not in src
+    # Old line parser must be gone
+    assert "for fact in parse_facts(full):" not in src
