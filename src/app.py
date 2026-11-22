@@ -2325,6 +2325,14 @@ class Pet(QWidget):
         """Apply a new face-square size (the whole layout follows)."""
         new_size = int(max(self.face_size_min,
                            min(self.face_size_max, new_size)))
+        
+        # Safety: log if size is suspiciously small (helps diagnose invisible bug)
+        if new_size < 50:
+            logger.warning(
+                f"[resize] face_size={new_size} is too small! "
+                f"(min={self.face_size_min}, max={self.face_size_max})"
+            )
+        
         if new_size != int(self.face_size):
             self.face_size = new_size
             self._apply_layout()
